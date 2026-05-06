@@ -7,7 +7,7 @@ import { dirname, resolve } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const csvFilePath = 'D:\\Tài liệu\\data.csv'; 
+const csvFilePath = './data.csv'; 
 
 const fileContent = fs.readFileSync(csvFilePath, { encoding: 'utf-8' });
 
