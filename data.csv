@@ -1,6 +1,6 @@
 ﻿"ID","Module","Input","Expected Result"
-"TC-01","Nhận diện Intent","Chào bạn","Dạ chào anh/chị ạ! Em có thể giúp gì cho anh/chị ạ?"
-"TC-02","Nhận diện Intent","Cảm ơn em nhé","Dạ em rất vui được hỗ trợ anh/chị ạ. Nếu cần thêm thông tin gì anh/ chị cứ nhắn em nhé!"
+"TC-01","Nhận diện Intent","Chào bạn","Xe Vũ Hán xin nghe. Em có thể giúp gì cho anh/chị ạ?"
+"TC-02","Nhận diện Intent","Cảm ơn em nhé","Dạ, không có chi ạ! Cám ơn anh/chị đã quan tâm đến dịch vụ của Xe Vũ Hán. Nếu cần thêm thông tin, anh/chị có thể theo dõi Fanpage Xe khách Vũ Hán tại facebook.com/vuhangroup ạ. Chúc anh/chị một ngày tốt lành!"
 "TC-03","Nhận diện Intent","Bạn là ai?","Dạ em là nhân viên chăm sóc khách hàng của nhà xe Vũ Hán, rất vui được hỗ trợ anh/chị ạ."
 "TC-04","Nhận diện Intent","Alo nhà xe Vũ Hán đúng không","Dạ đúng rồi ạ, em là nhân viên nhà xe Vũ Hán, anh/chị cần hỗ trợ gì ạ?"
 "TC-05","Nhận diện Intent","Gjskgksjg","Dạ em chưa hiểu rõ ý của anh/chị. Anh/chị vui lòng nhập lại câu hỏi về đặt vé hoặc gửi hàng để em hỗ trợ nhé."
