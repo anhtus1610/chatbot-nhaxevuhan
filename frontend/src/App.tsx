@@ -3,11 +3,13 @@ import Sidebar from './components/Sidebar'
 import RouteChecker from './pages/RouteChecker'
 import ScheduleViewer from './pages/ScheduleViewer'
 import GeminiChat from './pages/GeminiChat'
+import { ChatProvider } from './context/ChatContext'
 
 function App() {
   return (
-    <BrowserRouter>
-      <div className="app-layout">
+    <ChatProvider>
+      <BrowserRouter>
+        <div className="app-layout">
         <Sidebar />
         
         <main className="main-content">
@@ -19,7 +21,8 @@ function App() {
           </Routes>
         </main>
       </div>
-    </BrowserRouter>
+      </BrowserRouter>
+    </ChatProvider>
   )
 }
 

@@ -13,20 +13,20 @@ import {
 } from 'lucide-react'
 import { sendMessage, ChatResponse } from '../services/api'
 import SuggestionCard from '../components/SuggestionCard'
-
-interface Message {
-  role: 'user' | 'assistant'
-  content: string
-  timestamp: Date
-}
+import { useChat } from '../context/ChatContext'
 
 export default function GeminiChat() {
-  const [messages, setMessages] = useState<Message[]>([])
+  const { currentMessages: messages, addMessage, currentSessionId: sessionId, createNewChat } = useChat()
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [sessionId] = useState(() => `session-${Date.now()}`)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (!sessionId) {
+      createNewChat()
+    }
+  }, [sessionId, createNewChat])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -46,36 +46,36 @@ export default function GeminiChat() {
   const handleSend = async (text: string = input) => {
     if (!text.trim() || loading) return
 
-    const userMessage: Message = {
-      role: 'user',
+    const userMessage = {
+      role: 'user' as const,
       content: text.trim(),
       timestamp: new Date()
     }
 
-    setMessages(prev => [...prev, userMessage])
+    addMessage(userMessage)
     setInput('')
     setLoading(true)
 
     try {
       const response: ChatResponse = await sendMessage({
-        sessionId,
+        sessionId: sessionId!,
         message: text.trim()
       })
 
-      const assistantMessage: Message = {
-        role: 'assistant',
+      const assistantMessage = {
+        role: 'assistant' as const,
         content: response.reply,
         timestamp: new Date()
       }
 
-      setMessages(prev => [...prev, assistantMessage])
+      addMessage(assistantMessage)
     } catch (error) {
-      const errorMessage: Message = {
-        role: 'assistant',
+      const errorMessage = {
+        role: 'assistant' as const,
         content: 'Xin lỗi, tôi gặp sự cố khi kết nối. Bạn thử lại sau nhé!',
         timestamp: new Date()
       }
-      setMessages(prev => [...prev, errorMessage])
+      addMessage(errorMessage)
     } finally {
       setLoading(false)
     }
