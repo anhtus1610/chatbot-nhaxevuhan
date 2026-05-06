@@ -3,6 +3,7 @@ node_modules/
 
 # Environment variables (chứa API keys, secrets)
 .env
+.env.*
 .env.local
 .env.*.local
 
