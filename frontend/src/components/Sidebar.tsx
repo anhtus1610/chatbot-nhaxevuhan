@@ -2,12 +2,10 @@ import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { 
   MessageSquare, 
-  History, 
   MapPin, 
   Calendar, 
   Settings, 
   Menu,
-  ChevronLeft,
   Plus
 } from 'lucide-react'
 import { clsx, type ClassValue } from 'clsx'
