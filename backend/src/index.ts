@@ -19,18 +19,8 @@ const PORT = process.env.PORT || 14556;
 
 // Middleware
 app.use(cors({
-  origin: (origin, callback) => {
-    const allowedOrigins = process.env.SERVER_CORS_ORIGINS?.split(',').map(o => o.trim()) || [];
-    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
-      callback(null, true);
-    } else {
-      console.warn(`CORS blocked for origin: ${origin}`);
-      callback(null, false); // Trả về false thay vì Error để tránh crash app
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: '*', // Tạm thời để * để test với Vercel headers
+  credentials: true
 }));
 app.use(express.json());
 
