@@ -28,7 +28,7 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
     // baseURL: 'http://localhost:3000',
-    headless: false, // CHÍNH LÀ ĐÂY: Chuyển sang false để mở trình duyệt
+    headless: true, // CHÍNH LÀ ĐÂY: Chuyển sang false để mở trình duyệt
     launchOptions: {
       // Mỗi thao tác (click, gõ chữ) sẽ dừng lại 1 giây (1000ms) để bạn quan sát
       slowMo: 2000, 
