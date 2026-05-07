@@ -3,8 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Send, 
   Sparkles, 
-  Image as ImageIcon, 
-  Mic, 
   MapPin, 
   Clock, 
   Bus,
@@ -182,12 +180,6 @@ export default function GeminiChat() {
             className="chat-input"
           />
           <div className="input-actions">
-            <button className="icon-btn">
-              <ImageIcon size={20} />
-            </button>
-            <button className="icon-btn">
-              <Mic size={20} />
-            </button>
             <button 
               onClick={() => handleSend()}
               disabled={!input.trim() || loading}

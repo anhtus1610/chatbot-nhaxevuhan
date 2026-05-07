@@ -5,7 +5,6 @@ import {
   MessageSquare, 
   MapPin, 
   Calendar, 
-  Settings, 
   Menu,
   Plus,
   MessageCircle
@@ -94,15 +93,6 @@ export default function Sidebar() {
         </div>
       )}
 
-      <div className="sidebar-footer">
-        <div className={cn(
-          "nav-item cursor-pointer",
-          isCollapsed && "collapsed"
-        )}>
-          <Settings size={20} />
-          {!isCollapsed && <span>Cài đặt</span>}
-        </div>
-      </div>
     </aside>
   )
 }
