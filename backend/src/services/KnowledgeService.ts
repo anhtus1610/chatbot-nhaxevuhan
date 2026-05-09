@@ -418,24 +418,11 @@ class KnowledgeService {
       if (faqContent) {
         this.qaPairs = this.parseFAQMarkdown(faqContent);
         console.log(`[KnowledgeService] ✅ Loaded ${this.qaPairs.length} Q&A pairs from Markdown`);
+      } else {
+        console.warn('[KnowledgeService] ⚠️ FAQ Markdown trống hoặc không tồn tại.');
       }
     } catch (err) {
-      console.warn('[KnowledgeService] ⚠️ Could not read FAQ Markdown.');
-    }
-
-    // Fallback: qa_pairs.json cũ
-    if (this.qaPairs.length === 0) {
-      const qaPath = path.join(__dirname, '../../knowledge/qa_pairs.json');
-      if (fs.existsSync(qaPath)) {
-        const raw = JSON.parse(fs.readFileSync(qaPath, 'utf-8'));
-        // Normalize field names từ JSON cũ ({question, answer} hoặc {q, a})
-        this.qaPairs = raw.map((item: any) => ({
-          question: item.question ?? item.q,
-          answer: item.answer ?? item.a,
-          source: 'json',
-        }));
-        console.log(`[KnowledgeService] ✅ Loaded ${this.qaPairs.length} Q&A pairs from legacy JSON`);
-      }
+      console.warn('[KnowledgeService] ⚠️ Could not read FAQ Markdown.', err);
     }
 
     // 2. Routes từ Markdown
@@ -455,18 +442,11 @@ class KnowledgeService {
       this.prices = this.readMarkdownPriceTables(tablesDir);
       if (this.prices.length > 0) {
         console.log(`[KnowledgeService] ✅ Loaded ${this.prices.length} price entries from Markdown tables`);
+      } else {
+        console.warn('[KnowledgeService] ⚠️ Price Markdown tables trống hoặc không tồn tại.');
       }
     } catch (err) {
-      console.warn('[KnowledgeService] ⚠️ Could not read price Markdown tables.');
-    }
-
-    // Fallback: prices.json nếu MD tables trống
-    if (this.prices.length === 0) {
-      const pricesPath = path.join(__dirname, '../../knowledge/prices.json');
-      if (fs.existsSync(pricesPath)) {
-        this.prices = JSON.parse(fs.readFileSync(pricesPath, 'utf-8'));
-        console.log(`[KnowledgeService] ✅ Loaded ${this.prices.length} price entries from legacy JSON`);
-      }
+      console.warn('[KnowledgeService] ⚠️ Could not read price Markdown tables.', err);
     }
 
     // 4. Schedules từ Markdown schedules.md
@@ -477,22 +457,11 @@ class KnowledgeService {
         this.schedulesMarkdown = scheduleContent;
         this.schedules = this.parseMarkdownSchedule(scheduleContent);
         console.log(`[KnowledgeService] ✅ Loaded ${this.schedules.length} schedule entries from Markdown`);
+      } else {
+        console.warn('[KnowledgeService] ⚠️ schedules.md không tồn tại.');
       }
     } catch (err) {
-      console.warn('[KnowledgeService] ⚠️ Could not read Schedule Markdown.');
-    }
-
-    // Fallback: schedules.json nếu MD trống (dù data bị lỗi, giữ để phòng)
-    if (this.schedules.length === 0) {
-      const schedulesPath = path.join(__dirname, '../../knowledge/schedules.json');
-      if (fs.existsSync(schedulesPath)) {
-        try {
-          this.schedules = JSON.parse(fs.readFileSync(schedulesPath, 'utf-8'));
-          console.log(`[KnowledgeService] ✅ Loaded ${this.schedules.length} schedule entries from legacy JSON`);
-        } catch {
-          console.warn('[KnowledgeService] ⚠️ Could not parse legacy schedules.json');
-        }
-      }
+      console.warn('[KnowledgeService] ⚠️ Could not read Schedule Markdown.', err);
     }
 
     this.initialized = true;

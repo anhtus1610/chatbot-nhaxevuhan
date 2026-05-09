@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useChat } from '../context/ChatContext'
-import { 
-  MessageSquare, 
-  MapPin, 
-  Calendar, 
+import {
+  MessageSquare,
+  MapPin,
+  Calendar,
   Menu,
   Plus,
-  MessageCircle
+  MessageCircle,
+  ShieldCheck,
 } from 'lucide-react'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
@@ -21,7 +22,7 @@ export default function Sidebar() {
   const navigate = useNavigate()
   const { sessions, currentSessionId, createNewChat, selectSession } = useChat()
 
-  const navItems = [
+  const publicNavItems = [
     { icon: MessageSquare, label: 'Chat', path: '/chat' },
     { icon: MapPin, label: 'Kiểm tra tuyến', path: '/route-check' },
     { icon: Calendar, label: 'Lịch chạy', path: '/schedule' },
@@ -30,7 +31,7 @@ export default function Sidebar() {
   return (
     <aside className={cn('sidebar', isCollapsed && 'collapsed')}>
       <div className="sidebar-header">
-        <button 
+        <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="icon-btn"
         >
@@ -38,22 +39,20 @@ export default function Sidebar() {
         </button>
       </div>
 
-      <button 
+      <button
         onClick={() => {
           createNewChat()
           navigate('/chat')
         }}
-        className={cn(
-          "new-chat-btn",
-          isCollapsed && "collapsed"
-        )}
+        className={cn('new-chat-btn', isCollapsed && 'collapsed')}
       >
         <Plus size={20} />
         {!isCollapsed && <span className="new-chat-text">Cuộc trò chuyện mới</span>}
       </button>
 
+      {/* Nav chính */}
       <nav className="sidebar-nav">
-        {navItems.map((item) => (
+        {publicNavItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
@@ -67,8 +66,24 @@ export default function Sidebar() {
             {!isCollapsed && <span>{item.label}</span>}
           </NavLink>
         ))}
+
+        {/* Nút vào khu Admin */}
+        <NavLink
+          to="/admin/login"
+          className={({ isActive }) => cn(
+            'nav-item',
+            'admin-login-link',
+            isCollapsed && 'collapsed',
+            isActive && 'active'
+          )}
+          title="Đăng nhập Admin"
+        >
+          <ShieldCheck size={20} />
+          {!isCollapsed && <span>Đăng nhập Admin</span>}
+        </NavLink>
       </nav>
 
+      {/* Lịch sử chat */}
       {!isCollapsed && sessions.length > 0 && (
         <div className="sidebar-history">
           <h3 className="history-title">Gần đây</h3>

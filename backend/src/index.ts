@@ -11,6 +11,8 @@ import dotenv from 'dotenv';
 import { chatRouter } from './api/chatRouter';
 import { routeRouter } from './api/routeRouter';
 import { healthRouter } from './api/healthRouter';
+import { knowledgeRouter } from './api/knowledgeRouter';
+import { bookingRouter } from './api/bookingRouter';
 
 dotenv.config();
 
@@ -27,6 +29,8 @@ app.use(express.json());
 // Routes
 app.use('/api/chat', chatRouter);
 app.use('/api/v1/operators', routeRouter);
+app.use('/api/v1/operators', knowledgeRouter);   // Knowledge Editor API
+app.use('/api/v1/admin/bookings', bookingRouter); // Admin Booking API
 app.use('/api/route', routeRouter);              // Frontend dùng path này
 app.use('/api/health', healthRouter);
 app.get('/healthz', (req, res) => res.send('ok'));

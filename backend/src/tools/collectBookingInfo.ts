@@ -1,3 +1,7 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import * as crypto from 'crypto';
+
 /**
  * Tool thu thập thông tin đặt vé
  */
@@ -14,6 +18,34 @@ export interface BookingInfo {
   status: 'incomplete' | 'complete' | 'pending_confirmation';
   missing_fields: string[];
   confirmation_message?: string;
+}
+
+const DATA_DIR = path.join(__dirname, '../../../data');
+const BOOKINGS_FILE = path.join(DATA_DIR, 'bookings.json');
+
+// Helper to save booking
+function saveBooking(booking: BookingInfo) {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+
+  let bookings = [];
+  if (fs.existsSync(BOOKINGS_FILE)) {
+    try {
+      bookings = JSON.parse(fs.readFileSync(BOOKINGS_FILE, 'utf-8'));
+    } catch (e) {
+      console.error('Lỗi đọc bookings.json:', e);
+    }
+  }
+
+  const newBooking = {
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    ...booking
+  };
+
+  bookings.unshift(newBooking); // Add to beginning (newest first)
+  fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2), 'utf-8');
 }
 
 export async function collectBookingInfo(args: any): Promise<BookingInfo> {
@@ -62,6 +94,9 @@ export async function collectBookingInfo(args: any): Promise<BookingInfo> {
 Anh/chị chuyển khoản để giữ chỗ nhé ạ.
 Tìm Zalo OA "Xe khách Vũ Hán" (tích vàng) để xem thông tin thanh toán ạ.
 Lái phụ xe sẽ liên hệ trước 1-2 tiếng hẹn điểm đón ạ. 🙏`;
+
+    // Save to JSON
+    saveBooking(result);
   }
 
   return result;

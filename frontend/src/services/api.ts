@@ -76,4 +76,78 @@ export async function healthCheck(): Promise<{ status: string }> {
   return response.data
 }
 
+
+// ─── Knowledge Editor ───────────────────────────────────────────────────────
+
+export interface KnowledgeDocMeta {
+  path: string
+  name: string
+  folder: string
+  size: number
+  updatedAt: string
+}
+
+export interface KnowledgeDocsResponse {
+  operator_id: string
+  operator_name: string
+  total_docs: number
+  docs: KnowledgeDocMeta[]
+}
+
+export interface KnowledgeDocContent {
+  operator_id: string
+  path: string
+  name: string
+  content: string
+  size: number
+  updatedAt: string
+}
+
+export async function listKnowledgeDocs(operatorId = 'vu_han'): Promise<KnowledgeDocsResponse> {
+  const response = await api.get(`/v1/operators/${operatorId}/knowledge/docs`)
+  return response.data
+}
+
+export async function getKnowledgeDoc(operatorId = 'vu_han', filePath: string): Promise<KnowledgeDocContent> {
+  const response = await api.get(`/v1/operators/${operatorId}/knowledge/doc`, {
+    params: { path: filePath },
+  })
+  return response.data
+}
+
+export async function updateKnowledgeDoc(
+  operatorId = 'vu_han',
+  filePath: string,
+  content: string,
+  commitMessage?: string
+): Promise<{ success: boolean; updatedAt: string }> {
+  const response = await api.put(`/v1/operators/${operatorId}/knowledge/doc`, {
+    path: filePath,
+    content,
+    commit_message: commitMessage,
+  })
+  return response.data
+}
+
+// ─── Booking Management ──────────────────────────────────────────────────────
+
+export interface BookingData {
+  id: string
+  createdAt: string
+  customer_name?: string
+  phone_number?: string
+  pickup: string
+  dropoff: string
+  departure_date?: string
+  departure_time?: string
+  vehicle_type?: string
+  ticket_count?: number
+  status: string
+}
+
+export async function listBookings(): Promise<BookingData[]> {
+  const response = await api.get(`/v1/admin/bookings`)
+  return response.data.bookings || []
+}
+
 export default api
