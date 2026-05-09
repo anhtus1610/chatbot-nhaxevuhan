@@ -9,7 +9,7 @@ import {
   User,
   Bot
 } from 'lucide-react'
-import { sendMessageStream, ChatResponse } from '../services/api'
+import { sendMessageStream } from '../services/api'
 import SuggestionCard from '../components/SuggestionCard'
 import { useChat } from '../context/ChatContext'
 
