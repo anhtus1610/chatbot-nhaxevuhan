@@ -9,7 +9,7 @@ import {
   User,
   Bot
 } from 'lucide-react'
-import { sendMessage, ChatResponse } from '../services/api'
+import { sendMessageStream, ChatResponse } from '../services/api'
 import SuggestionCard from '../components/SuggestionCard'
 import { useChat } from '../context/ChatContext'
 
@@ -17,6 +17,7 @@ export default function GeminiChat() {
   const { currentMessages: messages, addMessage, currentSessionId: sessionId, createNewChat } = useChat()
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [streamingContent, setStreamingContent] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -55,19 +56,78 @@ export default function GeminiChat() {
     setLoading(true)
 
     try {
-      const response: ChatResponse = await sendMessage({
+      const reader = await sendMessageStream({
         sessionId: sessionId!,
         message: text.trim()
       })
 
-      const assistantMessage = {
-        role: 'assistant' as const,
-        content: response.reply,
-        timestamp: new Date()
+      if (!reader) {
+        throw new Error('No response body')
       }
 
-      addMessage(assistantMessage)
+      const decoder = new TextDecoder()
+      let accumulatedText = ''
+      let buffer = ''
+
+      while (true) {
+        const { value, done } = await reader.read()
+        
+        if (value) {
+          buffer += decoder.decode(value, { stream: !done })
+        }
+        
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (trimmed.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(trimmed.slice(6))
+              if (data.type === 'text') {
+                accumulatedText += data.content
+                setStreamingContent(accumulatedText)
+              } else if (data.type === 'done') {
+                if (data.content) accumulatedText = data.content
+              }
+            } catch (e) {
+              console.error('Error parsing SSE line:', e)
+            }
+          }
+        }
+
+        if (done) {
+          // Process remaining buffer
+          if (buffer.trim()) {
+            const trimmed = buffer.trim()
+            if (trimmed.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(trimmed.slice(6))
+                if (data.type === 'text') {
+                  accumulatedText += data.content
+                  setStreamingContent(accumulatedText)
+                } else if (data.type === 'done') {
+                  if (data.content) accumulatedText = data.content
+                }
+              } catch (e) {
+                console.error('Error parsing SSE line in flush:', e)
+              }
+            }
+          }
+          break
+        }
+      }
+
+      // After stream ends, save to context
+      if (accumulatedText) {
+        addMessage({
+          role: 'assistant' as const,
+          content: accumulatedText,
+          timestamp: new Date()
+        })
+      }
     } catch (error) {
+      console.error('Chat error:', error)
       const errorMessage = {
         role: 'assistant' as const,
         content: 'Xin lỗi, tôi gặp sự cố khi kết nối. Bạn thử lại sau nhé!',
@@ -76,6 +136,7 @@ export default function GeminiChat() {
       addMessage(errorMessage)
     } finally {
       setLoading(false)
+      setStreamingContent('')
     }
   }
 
@@ -126,12 +187,38 @@ export default function GeminiChat() {
                       {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
                     </div>
                     <div className={msg.role === 'user' ? 'message-bubble user-message' : 'message-bubble assistant-message'}>
-                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                      <p className="whitespace-pre-wrap">
+                        {msg.content.split(/(\*\*.*?\*\*)/g).map((part, i) => {
+                          if (part.startsWith('**') && part.endsWith('**')) {
+                            return <strong key={i} style={{ fontWeight: 600 }}>{part.slice(2, -2)}</strong>;
+                          }
+                          return <span key={i}>{part}</span>;
+                        })}
+                      </p>
                     </div>
                   </div>
                 </motion.div>
               ))}
-              {loading && (
+              {streamingContent && (
+                <div className="message-item">
+                  <div className="message-wrapper">
+                    <div className="avatar bot">
+                      <Bot size={16} />
+                    </div>
+                    <div className="message-bubble assistant-message">
+                      <p className="whitespace-pre-wrap">
+                        {streamingContent.split(/(\*\*.*?\*\*)/g).map((part, i) => {
+                          if (part.startsWith('**') && part.endsWith('**')) {
+                            return <strong key={i} style={{ fontWeight: 600 }}>{part.slice(2, -2)}</strong>;
+                          }
+                          return <span key={i}>{part}</span>;
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {loading && !streamingContent && (
                 <div className="message-item">
                   <div className="message-wrapper">
                     <div className="avatar bot">

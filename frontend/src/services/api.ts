@@ -71,6 +71,18 @@ export async function sendMessage(data: ChatRequest): Promise<ChatResponse> {
   return response.data
 }
 
+export async function sendMessageStream(data: ChatRequest): Promise<ReadableStreamDefaultReader<Uint8Array> | undefined> {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/chat/stream`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data)
+  });
+
+  return response.body?.getReader();
+}
+
 export async function healthCheck(): Promise<{ status: string }> {
   const response = await api.get('/health')
   return response.data

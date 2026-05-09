@@ -95,8 +95,7 @@ export class VuHanChatAgent {
         messages: this.conversationHistory,
         tools: tools as ChatCompletionTool[],
         tool_choice: 'auto',
-        temperature: 0.7,
-        max_tokens: 1000
+        max_completion_tokens: 1000
       });
 
       let assistantMessage = response.choices[0].message;
@@ -134,8 +133,7 @@ export class VuHanChatAgent {
           messages: this.conversationHistory,
           tools: tools as ChatCompletionTool[],
           tool_choice: 'auto',
-          temperature: 0.7,
-          max_tokens: 1000
+          max_completion_tokens: 1000
         });
 
         assistantMessage = response.choices[0].message;
@@ -162,6 +160,111 @@ export class VuHanChatAgent {
         message: 'Dạ xin lỗi, hệ thống đang gặp sự cố. Anh/chị vui lòng thử lại sau ạ.',
         needsEscalation: true
       };
+    }
+  }
+
+  async *chatStream(userMessage: string): AsyncGenerator<{ type: 'text' | 'done' | 'tool', content?: string, data?: any }, void, unknown> {
+    this.conversationHistory.push({
+      role: 'user',
+      content: userMessage
+    });
+
+    let continueLoop = true;
+    const toolCallsResults: ToolCallResult[] = [];
+
+    try {
+      while (continueLoop) {
+        const responseStream = await getOpenAI().chat.completions.create({
+          model: this.model,
+          messages: this.conversationHistory,
+          tools: tools as ChatCompletionTool[],
+          tool_choice: 'auto',
+          max_completion_tokens: 1000,
+          stream: true
+        });
+
+        let toolCalls: any[] = [];
+        let content = '';
+
+        for await (const chunk of responseStream) {
+          const delta = chunk.choices[0]?.delta;
+
+          if (delta?.content) {
+            content += delta.content;
+            yield { type: 'text', content: delta.content };
+          }
+
+          if (delta?.tool_calls) {
+            for (const tc of delta.tool_calls) {
+              const index = tc.index;
+              if (!toolCalls[index]) {
+                toolCalls[index] = { id: tc.id, function: { name: tc.function?.name, arguments: '' } };
+              }
+              if (tc.function?.arguments) {
+                toolCalls[index].function.arguments += tc.function.arguments;
+              }
+            }
+          }
+        }
+
+        toolCalls = toolCalls.filter(tc => tc !== undefined);
+
+        if (toolCalls.length > 0) {
+          this.conversationHistory.push({
+            role: 'assistant',
+            content: content || null,
+            tool_calls: toolCalls.map(tc => ({
+              id: tc.id,
+              type: 'function',
+              function: tc.function
+            }))
+          } as any);
+
+          for (const tc of toolCalls) {
+            const functionName = tc.function.name;
+            const functionArgs = JSON.parse(tc.function.arguments);
+
+            console.log(`🔧 Calling tool in stream: ${functionName}`, functionArgs);
+            
+            const result = await executeTool(functionName, functionArgs, this.operatorId);
+
+            toolCallsResults.push({
+              toolName: functionName,
+              result
+            });
+
+            this.conversationHistory.push({
+              role: 'tool',
+              tool_call_id: tc.id,
+              content: JSON.stringify(result)
+            });
+          }
+
+          continueLoop = true;
+        } else {
+          this.conversationHistory.push({
+            role: 'assistant',
+            content: content
+          });
+
+          const chatResponse = this.analyzeResponse(content, toolCallsResults);
+          
+          yield { 
+            type: 'done', 
+            content: content,
+            data: {
+              intent: chatResponse.intent,
+              bookingData: chatResponse.bookingData,
+              needsEscalation: chatResponse.needsEscalation
+            }
+          };
+          
+          continueLoop = false;
+        }
+      }
+    } catch (error) {
+      console.error('Error in chatStream:', error);
+      yield { type: 'text', content: 'Dạ xin lỗi, hệ thống đang gặp sự cố.' };
     }
   }
 

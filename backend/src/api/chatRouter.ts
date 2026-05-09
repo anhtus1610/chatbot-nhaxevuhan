@@ -62,6 +62,55 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/chat/stream
+router.post('/stream', async (req: Request, res: Response) => {
+  try {
+    const { message, session_id, operator_id = 'vu_han' } = req.body;
+
+    if (!message) {
+      return res.status(400).json({
+        error: {
+          code: 'invalid_request',
+          message: 'Thiếu trường "message"'
+        }
+      });
+    }
+
+    const sessionId = session_id || req.body.sessionId;
+    
+    let agent = sessions.get(sessionId);
+    if (!agent) {
+      agent = new VuHanChatAgent(operator_id);
+      if (sessionId) {
+        sessions.set(sessionId, agent);
+      }
+    }
+
+    // Set headers for SSE
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    // Handle client disconnect
+    req.on('close', () => {
+      console.log('Client disconnected from stream');
+    });
+
+    const stream = agent.chatStream(message);
+
+    for await (const chunk of stream) {
+      res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+    }
+
+    res.end();
+
+  } catch (error) {
+    console.error('Stream error:', error);
+    res.write(`data: ${JSON.stringify({ type: 'text', content: 'Lỗi hệ thống' })}\n\n`);
+    res.end();
+  }
+});
+
 // DELETE /api/chat/:session_id - Reset session
 router.delete('/:session_id', (req: Request, res: Response) => {
   const { session_id } = req.params;
