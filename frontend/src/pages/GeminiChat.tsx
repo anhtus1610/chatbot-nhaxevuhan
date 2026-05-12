@@ -13,6 +13,8 @@ import { sendMessageStream } from '../services/api'
 import SuggestionCard from '../components/SuggestionCard'
 import { useChat } from '../context/ChatContext'
 
+import { useLocation } from 'react-router-dom'
+
 export default function GeminiChat() {
   const { currentMessages: messages, addMessage, currentSessionId: sessionId, createNewChat } = useChat()
   const [input, setInput] = useState('')
@@ -20,12 +22,24 @@ export default function GeminiChat() {
   const [streamingContent, setStreamingContent] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const location = useLocation()
+  const hasSentInitialRef = useRef(false)
 
   useEffect(() => {
     if (!sessionId) {
       createNewChat()
     }
   }, [sessionId, createNewChat])
+
+  useEffect(() => {
+    const state = location.state as { initialMessage?: string } | null
+    if (state?.initialMessage && !hasSentInitialRef.current && sessionId) {
+      hasSentInitialRef.current = true
+      handleSend(state.initialMessage)
+      // Xóa state để không gửi lại khi refresh
+      window.history.replaceState({}, document.title)
+    }
+  }, [location.state, sessionId])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })

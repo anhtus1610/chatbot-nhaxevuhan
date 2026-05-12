@@ -1,5 +1,13 @@
 import { useState } from 'react'
 import { getSchedule, ScheduleItem } from '../services/api'
+import { useNavigate } from 'react-router-dom'
+
+const LOCATIONS = [
+  'Hà Nội', 'Mỹ Đình', 'Gia Lâm', 'Hà Giang', 'TP Hà Giang', 
+  'Bắc Quang', 'Vị Xuyên', 'Quản Bạ', 'Yên Minh', 'Đồng Văn', 
+  'Mèo Vạc', 'Xín Mần', 'Cốc Pài', 'Hoàng Su Phì', 'Tuyên Quang', 
+  'Hàm Yên', 'Phú Thọ', 'Đoan Hùng', 'Vĩnh Phúc', 'Ngã tư Nội Bài'
+]
 
 export default function ScheduleViewer() {
   const [from, setFrom] = useState('Mỹ Đình')
@@ -7,6 +15,7 @@ export default function ScheduleViewer() {
   const [loading, setLoading] = useState(false)
   const [schedules, setSchedules] = useState<ScheduleItem[]>([])
   const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   const handleSearch = async () => {
     setLoading(true)
@@ -49,6 +58,9 @@ export default function ScheduleViewer() {
       </div>
 
       <div className="card">
+        <datalist id="locations-list">
+          {LOCATIONS.map(loc => <option key={loc} value={loc} />)}
+        </datalist>
         <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', marginBottom: 20 }}>
           <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
             <label>Điểm đi</label>
@@ -56,6 +68,7 @@ export default function ScheduleViewer() {
               type="text"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
+              list="locations-list"
             />
           </div>
           <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
@@ -64,6 +77,7 @@ export default function ScheduleViewer() {
               type="text"
               value={to}
               onChange={(e) => setTo(e.target.value)}
+              list="locations-list"
             />
           </div>
           <button className="btn btn-primary" onClick={handleSearch} disabled={loading}>
@@ -84,6 +98,7 @@ export default function ScheduleViewer() {
               <th>Tuyến</th>
               <th>Loại xe</th>
               <th>Giá vé</th>
+              <th>Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -97,6 +112,15 @@ export default function ScheduleViewer() {
                   </span>
                 </td>
                 <td>{schedule.price.toLocaleString()}đ</td>
+                <td>
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ padding: '4px 12px', fontSize: '14px' }}
+                    onClick={() => navigate('/chat', { state: { initialMessage: `Tôi muốn đặt vé chuyến ${schedule.time} từ ${schedule.from} đi ${schedule.to} bằng ${schedule.vehicleType}` } })}
+                  >
+                    🎟️ Đặt vé
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

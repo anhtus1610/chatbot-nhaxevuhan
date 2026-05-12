@@ -352,11 +352,20 @@ class KnowledgeService {
             const timeList = times.split(',').map(t => t.trim()).filter(t => t.match(/\d/));
             
             for (const time of timeList) {
+              let resolvedVehicle = 'Giường 40 chỗ';
+              let cleanedTime = time.trim();
+              
+              if (cleanedTime.toLowerCase().includes('vip')) {
+                resolvedVehicle = 'VIP 9 chỗ';
+              }
+              
+              cleanedTime = cleanedTime.replace(/[()~]|vip|VIP/g, '').trim();
+              
               entries.push({
                 from,
                 to,
-                time: time.replace(/[()~]/g, '').trim(),
-                vehicle: 'Giường 40 chỗ',
+                time: cleanedTime,
+                vehicle: resolvedVehicle,
                 note,
               });
             }
@@ -457,6 +466,9 @@ class KnowledgeService {
         this.schedulesMarkdown = scheduleContent;
         this.schedules = this.parseMarkdownSchedule(scheduleContent);
         console.log(`[KnowledgeService] ✅ Loaded ${this.schedules.length} schedule entries from Markdown`);
+        // Debug: show VIP entries
+        const vipEntries = this.schedules.filter(s => s.vehicle.toLowerCase().includes('vip'));
+        console.log(`[KnowledgeService] 🚐 VIP entries: ${vipEntries.length}`, vipEntries.map(e => `${e.from}→${e.to} ${e.time} (${e.vehicle})`));
       } else {
         console.warn('[KnowledgeService] ⚠️ schedules.md không tồn tại.');
       }

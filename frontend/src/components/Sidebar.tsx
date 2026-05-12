@@ -67,20 +67,7 @@ export default function Sidebar() {
           </NavLink>
         ))}
 
-        {/* Nút vào khu Admin */}
-        <NavLink
-          to="/admin/login"
-          className={({ isActive }) => cn(
-            'nav-item',
-            'admin-login-link',
-            isCollapsed && 'collapsed',
-            isActive && 'active'
-          )}
-          title="Đăng nhập Admin"
-        >
-          <ShieldCheck size={20} />
-          {!isCollapsed && <span>Đăng nhập Admin</span>}
-        </NavLink>
+        {/* Nút vào khu Admin đã bị ẩn, truy cập qua /admin */}
       </nav>
 
       {/* Lịch sử chat */}

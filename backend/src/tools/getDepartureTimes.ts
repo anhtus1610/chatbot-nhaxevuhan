@@ -38,11 +38,16 @@ export async function getDepartureTimes(
   const normalizedFrom = normalizePlace(from);
   const normalizedTo = normalizePlace(to);
 
+  console.log(`[getDepartureTimes] Looking for: ${normalizedFrom.canonical} → ${normalizedTo.canonical}`);
+
   // 1. Tìm lịch từ KnowledgeService (parsed từ schedules.md)
   let scheduleEntries = knowledgeService.findSchedules(
     normalizedFrom.canonical,
     normalizedTo.canonical
   );
+
+  console.log(`[getDepartureTimes] Found ${scheduleEntries.length} schedule entries:`, 
+    scheduleEntries.map(s => `${s.time} (${s.vehicle})`));
 
   // Chuyển đổi ScheduleEntry → DepartureInfo
   let departures: DepartureInfo[] = scheduleEntries.map(s => ({

@@ -1,5 +1,13 @@
 import { useState } from 'react'
 import { checkRoute, RouteCheckResponse } from '../services/api'
+import { useNavigate } from 'react-router-dom'
+
+const LOCATIONS = [
+  'Hà Nội', 'Mỹ Đình', 'Gia Lâm', 'Hà Giang', 'TP Hà Giang', 
+  'Bắc Quang', 'Vị Xuyên', 'Quản Bạ', 'Yên Minh', 'Đồng Văn', 
+  'Mèo Vạc', 'Xín Mần', 'Cốc Pài', 'Hoàng Su Phì', 'Tuyên Quang', 
+  'Hàm Yên', 'Phú Thọ', 'Đoan Hùng', 'Vĩnh Phúc', 'Ngã tư Nội Bài'
+]
 
 export default function RouteChecker() {
   const [from, setFrom] = useState('')
@@ -8,6 +16,7 @@ export default function RouteChecker() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<RouteCheckResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,6 +53,9 @@ export default function RouteChecker() {
 
       <div className="grid-2">
         <div className="card">
+          <datalist id="locations-list">
+            {LOCATIONS.map(loc => <option key={loc} value={loc} />)}
+          </datalist>
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label>Điểm đi</label>
@@ -52,6 +64,7 @@ export default function RouteChecker() {
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
                 placeholder="VD: Hà Nội, Mỹ Đình..."
+                list="locations-list"
                 required
               />
             </div>
@@ -63,6 +76,7 @@ export default function RouteChecker() {
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
                 placeholder="VD: Hà Giang, Xín Mần..."
+                list="locations-list"
                 required
               />
             </div>
@@ -86,12 +100,22 @@ export default function RouteChecker() {
           {result && (
             <div className={`result-box ${result.valid ? 'success' : 'error'}`}>
               <h4>{result.valid ? '✅ Tuyến hợp lệ' : '❌ Tuyến không hợp lệ'}</h4>
-              <p><strong>Điểm đi:</strong> {result.from} → {result.normalizedFrom || result.from}</p>
-              <p><strong>Điểm đến:</strong> {result.to} → {result.normalizedTo || result.to}</p>
+              <p><strong>Điểm đi:</strong> {result.from}{result.normalizedFrom && result.normalizedFrom !== result.from ? ` → ${result.normalizedFrom}` : ''}</p>
+              <p><strong>Điểm đến:</strong> {result.to}{result.normalizedTo && result.normalizedTo !== result.to ? ` → ${result.normalizedTo}` : ''}</p>
               {result.price && <p><strong>Giá vé:</strong> {result.price.toLocaleString()}đ</p>}
               {result.message && <p><strong>Ghi chú:</strong> {result.message}</p>}
               {result.alternatives && result.alternatives.length > 0 && (
                 <p><strong>Gợi ý:</strong> {result.alternatives.join(', ')}</p>
+              )}
+              {result.valid && (
+                <div style={{ marginTop: '16px' }}>
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => navigate('/chat', { state: { initialMessage: `Tôi muốn đặt vé từ ${result.normalizedFrom || result.from} đi ${result.normalizedTo || result.to} bằng ${vehicleType === 'limousine' ? 'xe limousine' : 'xe khách'}` } })}
+                  >
+                    🎟️ Đặt vé ngay
+                  </button>
+                </div>
               )}
             </div>
           )}
