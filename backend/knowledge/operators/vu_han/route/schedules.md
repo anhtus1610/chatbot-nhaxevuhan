@@ -9,10 +9,17 @@
 - **Xe**: Giường nằm 40 chỗ (29F-028.44 / 29F-028.74)
 - **SĐT xe**: 0346152828 / 0329532828 (2 xe đối lưu ngày chẵn lẻ)
 
-| Chiều | Giờ khởi hành | Ghi chú |
-|-------|:------------:|---------|
-| Mỹ Đình → Đồng Văn | 19:30 | Đến ĐV sáng hôm sau |
-| Đồng Văn → Mỹ Đình | 17:30 | Đến HN sáng hôm sau |
+### Giờ đi từ Hà Nội → Đồng Văn
+
+| Giờ KH | Loại xe | Ghi chú |
+|:------:|---------|---------|
+| 19:30 | Giường 40 chỗ | Đến Đồng Văn ~06:10 (hôm sau) |
+
+### Giờ về từ Đồng Văn → Hà Nội
+
+| Giờ KH | Loại xe | Ghi chú |
+|:------:|---------|---------|
+| 17:30 | Giường 40 chỗ | Đến HN ~05:30 (hôm sau) |
 
 ### ETA dự kiến (chiều đi Mỹ Đình → Đồng Văn)
 
@@ -73,10 +80,17 @@
 - **Xe**: Giường nằm 40 chỗ (29F-028.21)
 - **SĐT xe**: 0347002828
 
-| Chiều | Giờ khởi hành | Ghi chú |
-|-------|:------------:|---------|
-| Mỹ Đình → Mèo Vạc | 18:30 | Đến MV sáng hôm sau |
-| Mèo Vạc → Mỹ Đình | 05:30 | Đến HN tối cùng ngày |
+### Giờ đi từ Hà Nội → Mèo Vạc
+
+| Giờ KH | Loại xe | Ghi chú |
+|:------:|---------|---------|
+| 18:30 | Giường 40 chỗ | Đến Mèo Vạc ~05:00 (hôm sau) |
+
+### Giờ về từ Mèo Vạc → Hà Nội
+
+| Giờ KH | Loại xe | Ghi chú |
+|:------:|---------|---------|
+| 05:30 | Giường 40 chỗ | Đến HN ~17:00 |
 
 ### ETA dự kiến (chiều đi Mỹ Đình → Mèo Vạc)
 
@@ -142,10 +156,17 @@
 - **Xe**: Giường nằm 40 chỗ (29B-174.04 / 29F-027.95)
 - **SĐT xe**: 0329762828 / 0866508228 (2 xe đối lưu ngày chẵn lẻ)
 
-| Chiều | Giờ khởi hành | Ghi chú |
-|-------|:------------:|---------|
-| Bắc Giang → Mèo Vạc | 16:30 | Qua Mỹ Đình ~19:20, đến MV sáng hôm sau |
-| Mèo Vạc → Bắc Giang | 15:30 | Đến BG sáng hôm sau |
+### Giờ đi từ Bắc Giang → Mèo Vạc
+
+| Giờ KH | Loại xe | Ghi chú |
+|:------:|---------|---------|
+| 16:30 | Giường 40 chỗ | Qua Mỹ Đình ~19:20, đến MV ~06:00 (hôm sau) |
+
+### Giờ về từ Mèo Vạc → Bắc Giang
+
+| Giờ KH | Loại xe | Ghi chú |
+|:------:|---------|---------|
+| 15:30 | Giường 40 chỗ | Đến Bắc Giang ~06:00 (hôm sau) |
 
 ### ETA dự kiến (chiều đi BG → Mèo Vạc)
 
@@ -186,10 +207,17 @@
 - **Xe**: Giường nằm 40 chỗ (29B-168.15)
 - **SĐT xe**: 0915656255
 
-| Chiều | Giờ khởi hành | Ghi chú |
-|-------|:------------:|---------|
-| Mỹ Đình → Xín Mần | 10:00 | Đến Xín Mần tối cùng ngày |
-| Xín Mần → Mỹ Đình | 19:30 | Đến HN sáng hôm sau |
+### Giờ đi từ Hà Nội → Xín Mần
+
+| Giờ KH | Loại xe | Ghi chú |
+|:------:|---------|---------|
+| 10:00 | Giường 40 chỗ | Đến Xín Mần ~18:00 |
+
+### Giờ về từ Xín Mần → Hà Nội
+
+| Giờ KH | Loại xe | Ghi chú |
+|:------:|---------|---------|
+| 19:30 | Giường 40 chỗ | Đến HN ~03:30 (hôm sau) |
 
 ### ETA dự kiến (chiều đi 10h: Mỹ Đình → Xín Mần)
 
@@ -220,10 +248,17 @@
 - **Xe**: Giường nằm 40 chỗ (29B-167.11)
 - **SĐT xe**: 0982119189
 
-| Chiều | Giờ khởi hành | Ghi chú |
-|-------|:------------:|---------|
-| Mỹ Đình → Xín Mần | 19:20 | Đến Xín Mần sáng hôm sau |
-| Xín Mần → Mỹ Đình | 08:20 | Đến HN tối cùng ngày |
+### Giờ đi từ Hà Nội → Xín Mần
+
+| Giờ KH | Loại xe | Ghi chú |
+|:------:|---------|---------|
+| 19:20 | Giường 40 chỗ | Đến Xín Mần ~04:00 (hôm sau) |
+
+### Giờ về từ Xín Mần → Hà Nội
+
+| Giờ KH | Loại xe | Ghi chú |
+|:------:|---------|---------|
+| 08:20 | Giường 40 chỗ | Đến HN ~17:00 |
 
 ### ETA dự kiến (chiều đi 19h20: Mỹ Đình → Xín Mần)
 
@@ -254,10 +289,29 @@
 - **Xe**: VIP 9 chỗ (29E-13080)
 - **SĐT xe**: 0377238228
 
-| Chiều | Giờ khởi hành | Ghi chú |
-|-------|:------------:|---------|
-| Mỹ Đình → Xín Mần | 05:30 | Đến Xín Mần chiều cùng ngày |
-| Xín Mần → Mỹ Đình | 13:00 | Đến HN tối cùng ngày |
+### Giờ đi từ Hà Nội → Xín Mần
+
+| Giờ KH | Loại xe | Ghi chú |
+|:------:|---------|---------|
+| 05:30 | VIP 9 chỗ | Qua Hoàng Su Phì ~12:10, đến Xín Mần ~13:30 |
+
+### Giờ về từ Xín Mần → Hà Nội
+
+| Giờ KH | Loại xe | Ghi chú |
+|:------:|---------|---------|
+| 13:00 | VIP 9 chỗ | Đến HN ~20:30 |
+
+### Giờ đi từ Hà Nội → Hoàng Su Phì
+
+| Giờ KH | Loại xe | Ghi chú |
+|:------:|---------|---------|
+| 05:30 | VIP 9 chỗ | Đến Hoàng Su Phì ~12:10 |
+
+### Giờ về từ Hoàng Su Phì → Hà Nội
+
+| Giờ KH | Loại xe | Ghi chú |
+|:------:|---------|---------|
+| 14:00 | VIP 9 chỗ | Đến HN ~20:30 |
 
 ### ETA dự kiến (chiều đi 5h30: Mỹ Đình → Xín Mần)
 
@@ -311,16 +365,16 @@ Có nhiều chuyến trong ngày:
 ### Giờ về từ Tuyên Quang → Hà Nội
 
 | Giờ KH | Loại xe | Ghi chú |
-|:------:|---------|---------|
-| 08:30 | Ghế 29 chỗ | |
-| 12:45 | Ghế 29 chỗ | |
-| 13:10 | Ghế 45 chỗ | |
-| 13:15 | Ghế 29 chỗ | |
-| 14:00 | Ghế 29 chỗ | |
-| 14:20 | Ghế 29 chỗ | |
-| 19:30 | VIP 9 chỗ | |
-| 23:45 | Giường 40 chỗ (HN-MV/ĐV) | Xe đi qua |
-| 02:30 | Giường 40 chỗ (HN-ĐV) | Xe đi qua |
+|:------:|:-------:|:--------|
+| 08:30 | Ghế 29 chỗ | Đến HN ~11:30 |
+| 12:45 | Ghế 29 chỗ | Đến HN ~15:45 |
+| 13:10 | Ghế 45 chỗ | Đến HN ~16:10 |
+| 13:15 | Ghế 29 chỗ | Đến HN ~16:15 |
+| 14:00 | Ghế 29 chỗ | Đến HN ~17:00 |
+| 14:20 | Ghế 29 chỗ | Đến HN ~17:20 |
+| 19:30 | VIP 9 chỗ | Đến HN ~21:30 |
+| 23:45 | Giường 40 chỗ (HN-MV/ĐV) | Xe đi qua, đến HN ~02:45 |
+| 02:30 | Giường 40 chỗ (HN-ĐV) | Xe đi qua, đến HN ~05:30 |
 
 ---
 

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import ReactMarkdown from 'react-markdown'
 import { 
   Send, 
   Sparkles, 
@@ -201,14 +202,23 @@ export default function GeminiChat() {
                       {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
                     </div>
                     <div className={msg.role === 'user' ? 'message-bubble user-message' : 'message-bubble assistant-message'}>
-                      <p className="whitespace-pre-wrap">
-                        {msg.content.split(/(\*\*.*?\*\*)/g).map((part, i) => {
-                          if (part.startsWith('**') && part.endsWith('**')) {
-                            return <strong key={i} style={{ fontWeight: 600 }}>{part.slice(2, -2)}</strong>;
-                          }
-                          return <span key={i}>{part}</span>;
-                        })}
-                      </p>
+                      {msg.role === 'user' ? (
+                        <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{msg.content}</p>
+                      ) : (
+                        <ReactMarkdown
+                          components={{
+                            p: ({ children }) => <p style={{ margin: '0 0 8px 0', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{children}</p>,
+                            strong: ({ children }) => <strong style={{ fontWeight: 600 }}>{children}</strong>,
+                            ul: ({ children }) => <ul style={{ margin: '6px 0', padding: 0, listStyle: 'none' }}>{children}</ul>,
+                            ol: ({ children }) => <ol style={{ margin: '6px 0', paddingLeft: '20px' }}>{children}</ol>,
+                            li: ({ children }) => <li style={{ lineHeight: 1.65, marginBottom: '4px', paddingLeft: '4px', display: 'flex', gap: '6px', alignItems: 'flex-start' }}><span style={{ flexShrink: 0, marginTop: '2px' }}>•</span><span>{children}</span></li>,
+                            h3: ({ children }) => <h3 style={{ fontWeight: 600, fontSize: '0.9em', margin: '10px 0 4px', opacity: 0.85 }}>{children}</h3>,
+                            h2: ({ children }) => <h2 style={{ fontWeight: 700, fontSize: '1em', margin: '10px 0 4px' }}>{children}</h2>,
+                          }}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
+                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -220,14 +230,19 @@ export default function GeminiChat() {
                       <Bot size={16} />
                     </div>
                     <div className="message-bubble assistant-message">
-                      <p className="whitespace-pre-wrap">
-                        {streamingContent.split(/(\*\*.*?\*\*)/g).map((part, i) => {
-                          if (part.startsWith('**') && part.endsWith('**')) {
-                            return <strong key={i} style={{ fontWeight: 600 }}>{part.slice(2, -2)}</strong>;
-                          }
-                          return <span key={i}>{part}</span>;
-                        })}
-                      </p>
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => <p style={{ margin: '0 0 8px 0', lineHeight: 1.65 }}>{children}</p>,
+                          strong: ({ children }) => <strong style={{ fontWeight: 600 }}>{children}</strong>,
+                          ul: ({ children }) => <ul style={{ margin: '6px 0', padding: 0, listStyle: 'none' }}>{children}</ul>,
+                          ol: ({ children }) => <ol style={{ margin: '6px 0', paddingLeft: '20px' }}>{children}</ol>,
+                          li: ({ children }) => <li style={{ lineHeight: 1.65, marginBottom: '4px', paddingLeft: '4px', display: 'flex', gap: '6px', alignItems: 'flex-start' }}><span style={{ flexShrink: 0, marginTop: '2px' }}>•</span><span>{children}</span></li>,
+                          h3: ({ children }) => <h3 style={{ fontWeight: 600, fontSize: '0.9em', margin: '10px 0 4px', opacity: 0.85 }}>{children}</h3>,
+                          h2: ({ children }) => <h2 style={{ fontWeight: 700, fontSize: '1em', margin: '10px 0 4px' }}>{children}</h2>,
+                        }}
+                      >
+                        {streamingContent}
+                      </ReactMarkdown>
                     </div>
                   </div>
                 </div>

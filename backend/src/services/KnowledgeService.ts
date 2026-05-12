@@ -22,6 +22,7 @@ export interface ScheduleEntry {
   time: string;
   vehicle: string;
   note: string;
+  eta?: string; // ETA dự kiến tới điểm đến, VD: "~07:30"
 }
 
 export interface RouteEntry {
@@ -317,6 +318,83 @@ class KnowledgeService {
       }
     }
     
+    // Also parse per-route detailed tables ("Giờ đi từ X → Y" and "Giờ về từ X → Y")
+    // These have format: | Giờ KH | Loại xe | Ghi chú | and contain ETA in notes
+    const detailSections = content.match(/### Giờ (đi|về) từ [\s\S]*?(?=\n###|\n---|$)/g);
+    if (detailSections) {
+      for (const section of detailSections) {
+        const headerMatch = section.match(/### Giờ (?:đi|về) từ (.+?)\s*(?:\(|$)/m);
+        if (!headerMatch) continue;
+        
+        const routeStr = headerMatch[1].trim();
+        const routeParts = routeStr.split(/→|↔/).map(s => s.trim());
+        const detailFrom = routeParts[0] || '';
+        const detailTo = routeParts[1] || '';
+        
+        if (!detailFrom || !detailTo) continue;
+        
+        const lines = section.split('\n');
+        let inTable = false;
+        let headerSkipped = false;
+        
+        for (const line of lines) {
+          const trimmed = line.trim();
+          
+          if (trimmed.startsWith('| Giờ KH') || trimmed.startsWith('|Giờ KH')) {
+            inTable = true;
+            headerSkipped = false;
+            continue;
+          }
+          
+          if (inTable && !headerSkipped && trimmed.match(/^\|[-:\s|]+\|$/)) {
+            headerSkipped = true;
+            continue;
+          }
+          
+          if (inTable && headerSkipped && trimmed.startsWith('|')) {
+            const cells = trimmed.split('|').map(c => c.trim()).filter(c => c.length > 0);
+            if (cells.length >= 2) {
+              const timeVal = cells[0].trim();
+              const vehicleVal = cells[1].trim();
+              const noteVal = cells[2] || '';
+              
+              // Extract ETA from note like "Đến TQ ~07:30" or "Sớm nhất, đến TQ ~07:30"
+              const etaMatch = noteVal.match(/~?(\d{1,2}:\d{2})/);
+              const etaVal = etaMatch ? `~${etaMatch[1]}` : undefined;
+              
+              // Check if this entry already exists (from summary table)
+              const existingIdx = entries.findIndex(e => 
+                e.time === timeVal && 
+                this.locationsMatch(e.from, detailFrom) && 
+                this.locationsMatch(e.to, detailTo)
+              );
+              
+              if (existingIdx >= 0) {
+                // Update existing entry with ETA and better vehicle info
+                if (etaVal) entries[existingIdx].eta = etaVal;
+                if (vehicleVal) entries[existingIdx].vehicle = vehicleVal;
+                if (noteVal) entries[existingIdx].note = noteVal;
+              } else {
+                // Add new entry
+                entries.push({
+                  from: detailFrom,
+                  to: detailTo,
+                  time: timeVal,
+                  vehicle: vehicleVal,
+                  note: noteVal,
+                  eta: etaVal,
+                });
+              }
+            }
+          }
+          
+          if (inTable && headerSkipped && !trimmed.startsWith('|') && trimmed.length > 0) {
+            inTable = false;
+          }
+        }
+      }
+    }
+
     // Also parse "Lịch xe chiều ngược" section
     const reverseMatch = content.match(/## Lịch xe chiều ngược[\s\S]*?(?=\n---|\n## |$)/);
     if (reverseMatch) {
