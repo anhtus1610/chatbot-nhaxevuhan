@@ -571,17 +571,18 @@ class KnowledgeService {
     return results;
   }
 
-  // Tìm lịch chạy
+  // Tìm lịch chạy ĐÚNG chiều (không tự trả chiều ngược)
   findSchedules(from: string, to: string): ScheduleEntry[] {
-    const results = this.schedules.filter(
+    return this.schedules.filter(
       s => this.locationsMatch(s.from, from) && this.locationsMatch(s.to, to)
     );
-    if (results.length === 0) {
-      return this.schedules.filter(
-        s => this.locationsMatch(s.from, to) && this.locationsMatch(s.to, from)
-      );
-    }
-    return results;
+  }
+
+  // Tìm lịch chạy chiều NGƯỢC (dùng để suy ra travel time)
+  findReverseSchedules(from: string, to: string): ScheduleEntry[] {
+    return this.schedules.filter(
+      s => this.locationsMatch(s.from, to) && this.locationsMatch(s.to, from)
+    );
   }
 
   /**

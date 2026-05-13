@@ -170,24 +170,54 @@ export class VuHanChatAgent {
     });
 
     let continueLoop = true;
+    let loopCount = 0;
+    const MAX_LOOPS = 8; // Tránh vòng lặp vô tận
     const toolCallsResults: ToolCallResult[] = [];
 
     try {
-      while (continueLoop) {
-        const responseStream = await getOpenAI().chat.completions.create({
-          model: this.model,
-          messages: this.conversationHistory,
-          tools: tools as ChatCompletionTool[],
-          tool_choice: 'auto',
-          max_completion_tokens: 1000,
-          stream: true
+      while (continueLoop && loopCount < MAX_LOOPS) {
+        loopCount++;
+
+        // Lọc bỏ assistant message rỗng trước khi gửi lên API
+        const cleanHistory = this.conversationHistory.filter((msg, idx) => {
+          if (msg.role === 'assistant') {
+            const m = msg as any;
+            const hasContent = m.content && m.content.trim().length > 0;
+            const hasToolCalls = m.tool_calls && m.tool_calls.length > 0;
+            if (!hasContent && !hasToolCalls) {
+              console.warn(`[chatStream] Skipping empty assistant message at index ${idx}`);
+              return false;
+            }
+          }
+          return true;
         });
+
+        let responseStream: any;
+        try {
+          responseStream = await getOpenAI().chat.completions.create({
+            model: this.model,
+            messages: cleanHistory,
+            tools: tools as ChatCompletionTool[],
+            tool_choice: 'auto',
+            max_completion_tokens: 1000,
+            stream: true
+          });
+        } catch (apiErr: any) {
+          console.error('[chatStream] OpenAI API error:', apiErr?.message);
+          yield { type: 'text', content: 'Dạ xin lỗi, hệ thống đang bận. Anh/chị thử lại sau nhé ạ.' };
+          yield { type: 'done', content: '' };
+          return;
+        }
 
         let toolCalls: any[] = [];
         let content = '';
+        let finishReason = '';
 
         for await (const chunk of responseStream) {
-          const delta = chunk.choices[0]?.delta;
+          const choice = chunk.choices[0];
+          if (!choice) continue;
+          const delta = choice.delta;
+          finishReason = choice.finish_reason || finishReason;
 
           if (delta?.content) {
             content += delta.content;
@@ -198,8 +228,10 @@ export class VuHanChatAgent {
             for (const tc of delta.tool_calls) {
               const index = tc.index;
               if (!toolCalls[index]) {
-                toolCalls[index] = { id: tc.id, function: { name: tc.function?.name, arguments: '' } };
+                toolCalls[index] = { id: tc.id, function: { name: tc.function?.name || '', arguments: '' } };
               }
+              if (tc.id && !toolCalls[index].id) toolCalls[index].id = tc.id;
+              if (tc.function?.name && !toolCalls[index].function.name) toolCalls[index].function.name = tc.function.name;
               if (tc.function?.arguments) {
                 toolCalls[index].function.arguments += tc.function.arguments;
               }
@@ -207,31 +239,34 @@ export class VuHanChatAgent {
           }
         }
 
-        toolCalls = toolCalls.filter(tc => tc !== undefined);
+        toolCalls = toolCalls.filter(tc => tc !== undefined && tc.function?.name);
 
         if (toolCalls.length > 0) {
+          // Có tool calls → thực thi và tiếp tục vòng lặp
           this.conversationHistory.push({
             role: 'assistant',
             content: content || null,
             tool_calls: toolCalls.map(tc => ({
               id: tc.id,
               type: 'function',
-              function: tc.function
+              function: { name: tc.function.name, arguments: tc.function.arguments }
             }))
           } as any);
 
           for (const tc of toolCalls) {
             const functionName = tc.function.name;
-            const functionArgs = JSON.parse(tc.function.arguments);
+            let functionArgs: any = {};
+            try {
+              functionArgs = JSON.parse(tc.function.arguments || '{}');
+            } catch {
+              console.error(`[chatStream] Failed to parse args for ${functionName}:`, tc.function.arguments);
+            }
 
             console.log(`🔧 Calling tool in stream: ${functionName}`, functionArgs);
             
             const result = await executeTool(functionName, functionArgs, this.operatorId);
 
-            toolCallsResults.push({
-              toolName: functionName,
-              result
-            });
+            toolCallsResults.push({ toolName: functionName, result });
 
             this.conversationHistory.push({
               role: 'tool',
@@ -241,7 +276,9 @@ export class VuHanChatAgent {
           }
 
           continueLoop = true;
-        } else {
+
+        } else if (content.trim().length > 0) {
+          // Có nội dung text → kết thúc bình thường
           this.conversationHistory.push({
             role: 'assistant',
             content: content
@@ -260,13 +297,29 @@ export class VuHanChatAgent {
           };
           
           continueLoop = false;
+
+        } else {
+          // Empty response — KHÔNG push vào history, fallback message
+          console.warn(`[chatStream] Empty response on loop ${loopCount}, finish_reason=${finishReason}`);
+          const fallback = 'Dạ xin lỗi, em chưa hiểu rõ câu hỏi của anh/chị. Anh/chị có thể hỏi lại được không ạ?';
+          yield { type: 'text', content: fallback };
+          yield { type: 'done', content: fallback };
+          continueLoop = false;
         }
       }
+
+      if (loopCount >= MAX_LOOPS) {
+        console.warn('[chatStream] Max loops reached, forcing exit');
+        yield { type: 'done', content: '' };
+      }
+
     } catch (error) {
       console.error('Error in chatStream:', error);
-      yield { type: 'text', content: 'Dạ xin lỗi, hệ thống đang gặp sự cố.' };
+      yield { type: 'text', content: 'Dạ xin lỗi, hệ thống đang gặp sự cố. Anh/chị thử lại sau nhé ạ.' };
+      yield { type: 'done', content: '' };
     }
   }
+
 
   private analyzeResponse(message: string, toolCalls: ToolCallResult[]): ChatResponse {
     const response: ChatResponse = {

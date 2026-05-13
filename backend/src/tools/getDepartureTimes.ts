@@ -101,9 +101,9 @@ export async function getDepartureTimes(
     scheduleEntries.map(s => `${s.time} (${s.vehicle}) eta=${s.eta || 'N/A'}`));
 
   // 2. Tìm chuyến chiều NGƯỢC để tính travel time cho các chuyến chưa có ETA
-  const reverseEntries = knowledgeService.findSchedules(
-    normalizedTo.canonical,
-    normalizedFrom.canonical
+  const reverseEntries = knowledgeService.findReverseSchedules(
+    normalizedFrom.canonical,
+    normalizedTo.canonical
   );
 
   // Tính travel time từ chiều ngược (theo loại xe)
