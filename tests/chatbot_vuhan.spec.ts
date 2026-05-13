@@ -30,19 +30,18 @@ for (const record of records) {
     if (!record.ID || record.ID.trim() === "") continue;
 
     test(`Kiểm tra ${record.ID}: ${record.Input}`, async ({ page }) => {
-        await page.goto('http://160.250.216.28:20202'); 
+        await page.goto('https://chatbot-nhaxevuhan.vercel.app/chat'); 
 
-        const chatInput = page.getByPlaceholder('Type your message...');
+        const chatInput = page.getByPlaceholder('Nhập câu hỏi của bạn tại đây...');
         await chatInput.fill(record.Input);
 
         const responsePromise = page.waitForResponse(response => 
-            response.url().includes('/api/v1/chat/conversation/') && response.status() === 200
+            response.url().includes('/api/chat/stream') && response.status() === 200
         );
 
-        const sendButton = page.locator('button[type="submit"]');
-        await sendButton.click();
+       await page.click('button:has(svg.lucide-send)');
 
-        await responsePromise;
+       await responsePromise;
         
         // Đợi 2 giây để chắc chắn Bot đã render xong tất cả các bong bóng tin nhắn
         await page.waitForTimeout(2000);
