@@ -14,6 +14,15 @@ export interface FAQResult {
 }
 
 export async function answerFAQ(query: string): Promise<FAQResult> {
+  if (!query) {
+    return {
+      found: false,
+      question: '',
+      answer: 'Dạ e đã tiếp nhận thông tin của anh chị ạ. Anh chị chờ giây lát em sẽ chuyển qua bộ phận chuyên trách xử lý ạ.',
+      confidence: 0
+    };
+  }
+
   // Đảm bảo Knowledge Service đã khởi tạo
   await knowledgeService.init();
 
@@ -79,6 +88,7 @@ export const specialSituations: { [key: string]: string } = {
 
 // Kiểm tra tình huống đặc biệt
 export function checkSpecialSituation(query: string): string | null {
+  if (!query) return null;
   const lowerQuery = query.toLowerCase();
   
   if (lowerQuery.includes('trẻ em') || lowerQuery.includes('tre em') || lowerQuery.includes('bé')) {
