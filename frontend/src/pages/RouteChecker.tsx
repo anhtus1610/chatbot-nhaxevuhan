@@ -102,7 +102,7 @@ export default function RouteChecker() {
               <h4>{result.valid ? '✅ Tuyến hợp lệ' : '❌ Tuyến không hợp lệ'}</h4>
               <p><strong>Điểm đi:</strong> {result.from}{result.normalizedFrom && result.normalizedFrom !== result.from ? ` → ${result.normalizedFrom}` : ''}</p>
               <p><strong>Điểm đến:</strong> {result.to}{result.normalizedTo && result.normalizedTo !== result.to ? ` → ${result.normalizedTo}` : ''}</p>
-              {result.price && <p><strong>Giá vé:</strong> {result.price.toLocaleString()}đ</p>}
+              {result.price && <p><strong>Giá vé:</strong> {result.price.toLocaleString('vi-VN')}đ</p>}
               {result.message && <p><strong>Ghi chú:</strong> {result.message}</p>}
               {result.alternatives && result.alternatives.length > 0 && (
                 <p><strong>Gợi ý:</strong> {result.alternatives.join(', ')}</p>

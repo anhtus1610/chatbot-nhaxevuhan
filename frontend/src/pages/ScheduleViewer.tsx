@@ -111,7 +111,7 @@ export default function ScheduleViewer() {
                     {schedule.vehicleType}
                   </span>
                 </td>
-                <td>{schedule.price.toLocaleString()}đ</td>
+                <td>{schedule.price.toLocaleString('vi-VN')}đ</td>
                 <td>
                   <button 
                     className="btn btn-primary" 
