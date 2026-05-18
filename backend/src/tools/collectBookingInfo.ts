@@ -15,9 +15,10 @@ export interface BookingInfo {
   departure_time?: string;
   vehicle_type?: string;
   ticket_count?: number;
-  status: 'incomplete' | 'complete' | 'pending_confirmation';
+  status: 'incomplete' | 'complete' | 'pending_confirmation' | 'invalid_time';
   missing_fields: string[];
   confirmation_message?: string;
+  suggested_times?: string[];
 }
 
 const DATA_DIR = path.join(__dirname, '../../../data');
@@ -48,7 +49,9 @@ function saveBooking(booking: BookingInfo) {
   fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2), 'utf-8');
 }
 
-export async function collectBookingInfo(args: any): Promise<BookingInfo> {
+import { getDepartureTimes } from './getDepartureTimes';
+
+export async function collectBookingInfo(args: any, operatorId: string = 'vu_han'): Promise<BookingInfo> {
   const {
     customer_name,
     phone_number,
@@ -69,7 +72,22 @@ export async function collectBookingInfo(args: any): Promise<BookingInfo> {
   if (!vehicle_type) missingFields.push('vehicle_type');
   if (!ticket_count) missingFields.push('ticket_count');
 
-  const status = missingFields.length === 0 ? 'complete' : 'incomplete';
+  let status: BookingInfo['status'] = missingFields.length === 0 ? 'complete' : 'incomplete';
+  let suggestedTimes: string[] | undefined = undefined;
+
+  // Validate departure_time if provided
+  if (departure_time && pickup && dropoff) {
+    const mappedVehicle = vehicle_type === 'vip' ? 'limousine' : (vehicle_type ? 'bus' : 'all');
+    const departuresInfo = await getDepartureTimes(operatorId, pickup, dropoff, mappedVehicle, departure_date);
+    if (departuresInfo.departures.length > 0) {
+      const availableTimes = departuresInfo.departures.map(d => d.time);
+      if (!availableTimes.includes(departure_time)) {
+        status = 'invalid_time';
+        suggestedTimes = availableTimes;
+        missingFields.push('departure_time');
+      }
+    }
+  }
 
   const result: BookingInfo = {
     customer_name,
@@ -81,7 +99,8 @@ export async function collectBookingInfo(args: any): Promise<BookingInfo> {
     vehicle_type,
     ticket_count,
     status,
-    missing_fields: missingFields
+    missing_fields: missingFields,
+    suggested_times: suggestedTimes
   };
 
   if (status === 'complete') {

@@ -253,7 +253,7 @@ export async function executeTool(
     case 'get_office_info':
       return await getOfficeInfo(operatorId, args.location);
     case 'collect_booking_info':
-      return await collectBookingInfo(args);
+      return await collectBookingInfo(args, operatorId);
     case 'check_shipping_info':
       return await checkShippingInfo(operatorId, args.from_location, args.to_location);
     case 'handoff_to_cskh':
