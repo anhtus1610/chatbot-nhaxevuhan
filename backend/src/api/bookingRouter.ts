@@ -1,20 +1,14 @@
 import { Router, Request, Response } from 'express';
-import * as fs from 'fs';
-import * as path from 'path';
+import prisma from '../utils/prisma';
 
 const router = Router();
 
-const DATA_DIR = path.join(__dirname, '../../../data');
-const BOOKINGS_FILE = path.join(DATA_DIR, 'bookings.json');
-
 // GET /api/v1/admin/bookings
-router.get('/', (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
-    if (!fs.existsSync(BOOKINGS_FILE)) {
-      return res.json({ bookings: [] });
-    }
-
-    const bookings = JSON.parse(fs.readFileSync(BOOKINGS_FILE, 'utf-8'));
+    const bookings = await prisma.booking.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
     res.json({ bookings });
   } catch (err) {
     console.error('[BookingRouter] list bookings error:', err);

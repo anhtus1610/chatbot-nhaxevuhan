@@ -21,32 +21,31 @@ export interface BookingInfo {
   suggested_times?: string[];
 }
 
-const DATA_DIR = path.join(__dirname, '../../../data');
-const BOOKINGS_FILE = path.join(DATA_DIR, 'bookings.json');
+import prisma from '../utils/prisma';
 
-// Helper to save booking
-function saveBooking(booking: BookingInfo) {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+// Helper to save booking to PostgreSQL
+async function saveBooking(booking: BookingInfo) {
+  try {
+    await prisma.booking.create({
+      data: {
+        customer_name: booking.customer_name,
+        phone_number: booking.phone_number,
+        pickup: booking.pickup,
+        dropoff: booking.dropoff,
+        departure_date: booking.departure_date,
+        departure_time: booking.departure_time,
+        vehicle_type: booking.vehicle_type,
+        ticket_count: booking.ticket_count,
+        status: booking.status,
+        missing_fields: booking.missing_fields,
+        confirmation_message: booking.confirmation_message,
+        suggested_times: booking.suggested_times || [],
+      }
+    });
+    console.log('[collectBookingInfo] Saved booking to PostgreSQL');
+  } catch (error) {
+    console.error('Lỗi lưu booking vào database:', error);
   }
-
-  let bookings = [];
-  if (fs.existsSync(BOOKINGS_FILE)) {
-    try {
-      bookings = JSON.parse(fs.readFileSync(BOOKINGS_FILE, 'utf-8'));
-    } catch (e) {
-      console.error('Lỗi đọc bookings.json:', e);
-    }
-  }
-
-  const newBooking = {
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
-    ...booking
-  };
-
-  bookings.unshift(newBooking); // Add to beginning (newest first)
-  fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2), 'utf-8');
 }
 
 import { getDepartureTimes } from './getDepartureTimes';
@@ -114,8 +113,8 @@ Anh/chị chuyển khoản để giữ chỗ nhé ạ.
 Tìm Zalo OA "Xe khách Vũ Hán" (tích vàng) để xem thông tin thanh toán ạ.
 Lái phụ xe sẽ liên hệ trước 1-2 tiếng hẹn điểm đón ạ. 🙏`;
 
-    // Save to JSON
-    saveBooking(result);
+    // Save to PostgreSQL Database
+    await saveBooking(result);
   }
 
   return result;

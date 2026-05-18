@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Booking {
+  id                 String   @id @default(uuid())
+  createdAt          DateTime @default(now())
+  customer_name      String?
+  phone_number       String?
+  pickup             String
+  dropoff            String
+  departure_date     String?
+  departure_time     String?
+  vehicle_type       String?
+  ticket_count       Int?     @default(1)
+  status             String   @default("incomplete")
+  missing_fields     String[] // PostgreSQL hỗ trợ mảng (array) natively
+  confirmation_message String?
+  suggested_times    String[]
+}
+
+model Faq {
+  id        String   @id @default(uuid())
+  question  String
+  answer    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Route {
+  id          String   @id @default(uuid())
+  from        String
+  to          String
+  vehicleType String
+  price       Int
+  createdAt   DateTime @default(now())
+}
+
+model Schedule {
+  id          String   @id @default(uuid())
+  from        String
+  to          String
+  time        String
+  vehicleType String
+  eta         String?
+  note        String?
+  createdAt   DateTime @default(now())
+}
