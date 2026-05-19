@@ -10,9 +10,9 @@ router.get('/', async (req: Request, res: Response) => {
       orderBy: { createdAt: 'desc' }
     });
     res.json({ bookings });
-  } catch (err) {
+  } catch (err: any) {
     console.error('[BookingRouter] list bookings error:', err);
-    res.status(500).json({ error: { code: 'internal_error', message: 'Lỗi hệ thống' } });
+    res.status(500).json({ error: { code: 'internal_error', message: err.message || 'Lỗi hệ thống', stack: err.stack } });
   }
 });
 
@@ -31,9 +31,9 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
       data: { status }
     });
     res.json({ booking: updated });
-  } catch (err) {
+  } catch (err: any) {
     console.error('[BookingRouter] update status error:', err);
-    res.status(500).json({ error: { code: 'internal_error', message: 'Lỗi hệ thống' } });
+    res.status(500).json({ error: { code: 'internal_error', message: err.message || 'Lỗi hệ thống', stack: err.stack } });
   }
 });
 
@@ -45,9 +45,9 @@ router.delete('/:id', async (req: Request, res: Response) => {
       where: { id }
     });
     res.json({ success: true });
-  } catch (err) {
+  } catch (err: any) {
     console.error('[BookingRouter] delete error:', err);
-    res.status(500).json({ error: { code: 'internal_error', message: 'Lỗi hệ thống' } });
+    res.status(500).json({ error: { code: 'internal_error', message: err.message || 'Lỗi hệ thống', stack: err.stack } });
   }
 });
 
