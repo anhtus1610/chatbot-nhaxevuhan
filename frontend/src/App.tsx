@@ -7,6 +7,7 @@ import ScheduleViewer from './pages/ScheduleViewer'
 import GeminiChat from './pages/GeminiChat'
 import KnowledgeEditor from './pages/KnowledgeEditor'
 import BookingManager from './pages/BookingManager'
+import CustomerManager from './pages/CustomerManager'
 import AdminLogin from './pages/AdminLogin'
 import { ChatProvider } from './context/ChatContext'
 import { AuthProvider } from './context/AuthContext'
@@ -30,6 +31,11 @@ function App() {
                     <Route path="/bookings" element={
                       <ProtectedRoute>
                         <BookingManager />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/customers" element={
+                      <ProtectedRoute>
+                        <CustomerManager />
                       </ProtectedRoute>
                     } />
                     <Route path="/knowledge" element={

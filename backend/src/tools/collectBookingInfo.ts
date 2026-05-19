@@ -26,27 +26,85 @@ import prisma from '../utils/prisma';
 // Helper to save booking to PostgreSQL
 async function saveBooking(booking: BookingInfo) {
   try {
-    await prisma.booking.create({
-      data: {
-        customer_name: booking.customer_name,
-        phone_number: booking.phone_number,
-        pickup: booking.pickup,
-        dropoff: booking.dropoff,
-        departure_date: booking.departure_date,
-        departure_time: booking.departure_time,
-        vehicle_type: booking.vehicle_type,
-        ticket_count: booking.ticket_count,
-        status: booking.status,
-        missing_fields: booking.missing_fields,
-        confirmation_message: booking.confirmation_message,
-        suggested_times: booking.suggested_times || [],
+    let customerId: string | undefined = undefined;
+
+    if (booking.phone_number && booking.customer_name) {
+      // 1. Upsert Customer (without total_tickets for now)
+      const customer = await prisma.customer.upsert({
+        where: { phone: booking.phone_number },
+        update: { name: booking.customer_name },
+        create: {
+          name: booking.customer_name,
+          phone: booking.phone_number,
+          total_tickets: 0
+        }
+      });
+      customerId = customer.id;
+
+      // 2. Find if there is an existing booking for the same trip to UPDATE instead of CREATE
+      const existingBooking = await prisma.booking.findFirst({
+        where: {
+          phone_number: booking.phone_number,
+          departure_date: booking.departure_date,
+          pickup: booking.pickup,
+          dropoff: booking.dropoff
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      if (existingBooking) {
+        // Update existing booking
+        await prisma.booking.update({
+          where: { id: existingBooking.id },
+          data: {
+            ticket_count: booking.ticket_count,
+            vehicle_type: booking.vehicle_type,
+            departure_time: booking.departure_time,
+            status: booking.status,
+            missing_fields: booking.missing_fields,
+            confirmation_message: booking.confirmation_message,
+            suggested_times: booking.suggested_times || [],
+          }
+        });
+      } else {
+        // Create new booking
+        await prisma.booking.create({
+          data: {
+            customer_name: booking.customer_name,
+            phone_number: booking.phone_number,
+            pickup: booking.pickup,
+            dropoff: booking.dropoff,
+            departure_date: booking.departure_date,
+            departure_time: booking.departure_time,
+            vehicle_type: booking.vehicle_type,
+            ticket_count: booking.ticket_count,
+            status: booking.status,
+            missing_fields: booking.missing_fields,
+            confirmation_message: booking.confirmation_message,
+            suggested_times: booking.suggested_times || [],
+            customerId: customerId
+          }
+        });
       }
-    });
-    console.log('[collectBookingInfo] Saved booking to PostgreSQL');
+
+      // 3. Recalculate total tickets for this customer
+      const allBookings = await prisma.booking.findMany({
+        where: { customerId: customerId, status: { not: 'cancelled' } }
+      });
+      const totalTickets = allBookings.reduce((sum, b) => sum + (b.ticket_count || 1), 0);
+      
+      await prisma.customer.update({
+        where: { id: customerId },
+        data: { total_tickets: totalTickets }
+      });
+
+      console.log(`[collectBookingInfo] Upserted booking for ${booking.phone_number}. Total tickets: ${totalTickets}`);
+    }
   } catch (error) {
     console.error('Lỗi lưu booking vào database:', error);
   }
 }
+
 
 import { getDepartureTimes } from './getDepartureTimes';
 

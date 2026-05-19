@@ -13,6 +13,8 @@ import { routeRouter } from './api/routeRouter';
 import { healthRouter } from './api/healthRouter';
 import { knowledgeRouter } from './api/knowledgeRouter';
 import { bookingRouter } from './api/bookingRouter';
+import { customerRouter } from './api/customerRouter';
+import { cskhRouter } from './api/cskhRouter';
 
 dotenv.config();
 
@@ -31,6 +33,8 @@ app.use('/api/chat', chatRouter);
 app.use('/api/v1/operators', routeRouter);
 app.use('/api/v1/operators', knowledgeRouter);   // Knowledge Editor API
 app.use('/api/v1/admin/bookings', bookingRouter); // Admin Booking API
+app.use('/api/v1/admin/customers', customerRouter); // Admin Customer API
+app.use('/api/v1/admin/cskh', cskhRouter);          // Admin CSKH Notifications
 app.use('/api/route', routeRouter);              // Frontend dùng path này
 app.use('/api/health', healthRouter);
 app.get('/healthz', (req, res) => res.send('ok'));

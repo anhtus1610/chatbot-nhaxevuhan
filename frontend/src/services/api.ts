@@ -162,4 +162,15 @@ export async function listBookings(): Promise<BookingData[]> {
   return response.data.bookings || []
 }
 
+export async function updateBookingStatus(id: string, status: string): Promise<BookingData> {
+  const response = await api.patch(`/v1/admin/bookings/${id}/status`, { status })
+  return response.data.booking
+}
+
+export async function deleteBooking(id: string): Promise<boolean> {
+  const response = await api.delete(`/v1/admin/bookings/${id}`)
+  return response.data.success
+}
+
 export default api
+

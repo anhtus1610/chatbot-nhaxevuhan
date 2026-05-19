@@ -6,7 +6,8 @@ import {
   BookOpen,
   LogOut,
   ShieldCheck,
-  Users
+  Users,
+  UserCheck
 } from 'lucide-react'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
@@ -22,6 +23,7 @@ export default function AdminSidebar() {
 
   const adminNavItems = [
     { icon: Users, label: 'Quản lý đặt xe', path: '/admin/bookings' },
+    { icon: UserCheck, label: 'Quản lý khách hàng', path: '/admin/customers' },
     { icon: BookOpen, label: 'Quản lý tri thức', path: '/admin/knowledge' },
   ]
 

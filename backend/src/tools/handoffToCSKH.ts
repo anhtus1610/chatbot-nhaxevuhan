@@ -2,6 +2,8 @@
  * Tool chuyển hội thoại sang CSKH
  */
 
+import prisma from '../utils/prisma';
+
 export interface HandoffResult {
   success: boolean;
   reason: string;
@@ -14,8 +16,22 @@ export async function handoffToCSKH(
   reason: string,
   customerInfo?: any
 ): Promise<HandoffResult> {
-  // Generate ticket ID
   const ticketId = `CSKH-${Date.now()}`;
+
+  // Save to database for admin notification
+  try {
+    await prisma.cskhRequest.create({
+      data: {
+        ticket_id: ticketId,
+        reason,
+        phone: customerInfo?.phone_number || customerInfo?.phone || null,
+        name: customerInfo?.customer_name || customerInfo?.name || null,
+        sessionId: customerInfo?.session_id || null,
+      }
+    });
+  } catch (err) {
+    console.error('[handoffToCSKH] Failed to save CSKH request:', err);
+  }
 
   return {
     success: true,

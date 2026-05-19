@@ -16,4 +16,39 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
+// PATCH /api/v1/admin/bookings/:id/status
+router.patch('/:id/status', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (!status) {
+      return res.status(400).json({ error: { code: 'invalid_request', message: 'Thiếu trường status' } });
+    }
+
+    const updated = await prisma.booking.update({
+      where: { id },
+      data: { status }
+    });
+    res.json({ booking: updated });
+  } catch (err) {
+    console.error('[BookingRouter] update status error:', err);
+    res.status(500).json({ error: { code: 'internal_error', message: 'Lỗi hệ thống' } });
+  }
+});
+
+// DELETE /api/v1/admin/bookings/:id
+router.delete('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    await prisma.booking.delete({
+      where: { id }
+    });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[BookingRouter] delete error:', err);
+    res.status(500).json({ error: { code: 'internal_error', message: 'Lỗi hệ thống' } });
+  }
+});
+
 export { router as bookingRouter };
