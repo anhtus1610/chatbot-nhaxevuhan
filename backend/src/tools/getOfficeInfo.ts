@@ -32,7 +32,7 @@ const offices: { [key: string]: OfficeInfo } = {
     name: 'Văn phòng Mỹ Đình (Hà Nội)',
     address: 'N5 A2 Ngõ 1 Nguyễn Hoàng, mặt sau bến xe Mỹ Đình',
     phone: '0912 037 237',
-    working_hours: 'Đến 20:00',
+    working_hours: 'Đến 20:00 (nhận hàng đến 18:00)',
     note: ''
   },
   'giap_bat': {
