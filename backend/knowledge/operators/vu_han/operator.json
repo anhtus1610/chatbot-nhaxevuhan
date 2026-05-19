@@ -1,0 +1,12 @@
+{
+  "id": "vu_han",
+  "name": "Nhà xe Vũ Hán",
+  "description": "Hệ thống xe khách chất lượng cao chuyên tuyến Hà Nội - Tuyên Quang - Hà Giang - Cao Bằng - Lào Cai (Bắc Hà).",
+  "services": ["đặt vé", "gửi hàng", "cho thuê xe du lịch", "hợp đồng"],
+  "contact": {
+    "hotline": ["0915656255", "0982119089"],
+    "fanpage": "facebook.com/vuhangroup",
+    "zalo": "Xe khách Vũ Hán"
+  },
+  "knowledge_version": "2026-04-21"
+}

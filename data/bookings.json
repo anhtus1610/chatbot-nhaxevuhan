@@ -1,0 +1,17 @@
+[
+  {
+    "id": "f7297e3d-a94e-4882-b597-49a922b529e2",
+    "createdAt": "2026-05-09T09:05:08.790Z",
+    "customer_name": "Hoàng Anh Tú",
+    "phone_number": "0123456788",
+    "pickup": "Tuyên Quang",
+    "dropoff": "Xín Mần",
+    "departure_date": "2026-05-10",
+    "departure_time": "16:00",
+    "vehicle_type": "giuong",
+    "ticket_count": 2,
+    "status": "complete",
+    "missing_fields": [],
+    "confirmation_message": "Dạ em xác nhận đặt vé:\n• 2 vé giường nằm Tuyên Quang → Xín Mần\n• Ngày: 2026-05-10 - Chuyến: 16: 00\n• Tên: Hoàng Anh Tú\n• SĐT: 0123456788\n\nAnh/chị chuyển khoản để giữ chỗ nhé ạ.\nTìm Zalo OA \"Xe khách Vũ Hán\" (tích vàng) để xem thông tin thanh toán ạ.\nLái phụ xe sẽ liên hệ trước 1-2 tiếng hẹn điểm đón ạ. 🙏"
+  }
+]
