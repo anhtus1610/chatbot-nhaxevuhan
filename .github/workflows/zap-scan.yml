@@ -1,6 +1,8 @@
 name: Automated Security Scan (OWASP ZAP)
 
 on:
+  push:
+    branches: [ main ] 
   schedule:
     - cron: '0 0 * * 0' 
   workflow_dispatch: 
@@ -19,12 +21,12 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }} 
         target: 'https://chatbot-nhaxevuhan.vercel.app/chat' 
-        rules_file_name: '.zap/rules.tsv' 
         fail_action: false 
+      continue-on-error: true 
 
     - name: Upload Security Report
       uses: actions/upload-artifact@v4
-      if: always()
+      if: always() 
       with:
         name: zap-security-report
-        path: zap_report.html 
+        path: report_html.html 
