@@ -1,3 +1,14 @@
+<<<<<<< HEAD
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+.env
+=======
 # Dependencies
 node_modules/
 
@@ -35,3 +46,4 @@ prisma/migrations/
 
 # Misc
 .cache/
+>>>>>>> 3234724ed931baacb83ffb3f93f6d07bced12761
