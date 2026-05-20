@@ -1,0 +1,22 @@
+name: JMeter Performance Test
+
+on: [push] # Chạy mỗi khi bạn push code lên
+
+jobs:
+  performance-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run JMeter
+        uses: rbhadti94/apache-jmeter-action@v0.5.0
+        with:
+          testFilePath: Chatbot_NhaXeVuHan.jmx
+          outputReportsFolder: performance-reports/
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: jmeter-report
+          path: performance-reports/

@@ -1,0 +1,71 @@
+message,label
+Xe từ Hà Nội đi Đồng Văn lúc mấy giờ?,TUYEN_DUONG
+Chuyến muộn nhất từ Hà Giang về Mỹ Đình là mấy giờ?,TUYEN_DUONG
+Có xe nào đi từ Bắc Quang lúc 2 giờ sáng không?,TUYEN_DUONG
+Lịch trình xe chạy tuyến Thái Nguyên - Mèo Vạc,TUYEN_DUONG
+Xe có đi qua bệnh viện tỉnh Hà Giang không?,TUYEN_DUONG
+Tôi muốn đi từ sân bay Nội Bài về Hà Giang thì đón ở đâu?,TUYEN_DUONG
+Xe Vũ Hán có chạy tuyến đường 2 không?,TUYEN_DUONG
+Thời gian dự kiến đến Quản Bạ là mấy giờ nếu đi chuyến 21h?,TUYEN_DUONG
+Có xe trung chuyển tận nơi ở thành phố Hà Giang không?,TUYEN_DUONG
+Xe có dừng nghỉ dọc đường ở Tuyên Quang không?,TUYEN_DUONG
+Đón xe ở ngã tư Nội Bài thì đứng chỗ nào chính xác?,TUYEN_DUONG
+Xe có chạy vào ngày lễ 30/4 không?,TUYEN_DUONG
+Sáng mai có chuyến nào sớm nhất đi từ Hà Nội?,TUYEN_DUONG
+Xe trả khách ở bến xe nào tại Hà Nội?,TUYEN_DUONG
+Lộ trình xe đi qua những huyện nào của Hà Giang?,TUYEN_DUONG
+Giá vé giường nằm đơn và giường đôi khác nhau thế nào?,GIA_VE
+Trẻ em dưới 5 tuổi có phải mua vé không?,GIA_VE
+Có giảm giá cho sinh viên khi đi thực tập không?,GIA_VE
+Giá vé gửi xe máy theo người là bao nhiêu?,GIA_VE
+Đặt vé khứ hồi có được giảm % nào không?,GIA_VE
+Giá vé ngày Tết có tăng không bạn?,GIA_VE
+Gửi một bao tải quần áo 20kg từ Hà Nội lên Hà Giang giá bao nhiêu?,GIA_VE
+Tôi muốn bao nguyên xe 16 chỗ thì giá thế nào?,GIA_VE
+Có chương trình tích điểm đổi vé không?,GIA_VE
+Thanh toán bằng chuyển khoản hay tiền mặt?,GIA_VE
+Trên xe có cổng sạc điện thoại USB không?,TIEN_ICH
+Wifi trên xe có xem được Youtube mượt không?,TIEN_ICH
+Xe có nhà vệ sinh khép kín bên trong không?,TIEN_ICH
+Có phục vụ chăn đắp và gối sạch không?,TIEN_ICH
+Xe đời mới hay đời cũ vậy bạn?,TIEN_ICH
+Điều hòa trên xe có chỉnh được độ lạnh tại chỗ không?,TIEN_ICH
+Có nước uống và khăn lạnh miễn phí không?,TIEN_ICH
+Xe có cho mang vật nuôi lên không?,TIEN_ICH
+Rèm cửa có che nắng tốt không?,TIEN_ICH
+Ghế nằm có chức năng massage không?,TIEN_ICH
+Xe có khoang chứa đồ rộng cho vali lớn không?,TIEN_ICH
+Trên xe có yêu cầu đi chân đất không?,TIEN_ICH
+Có hỗ trợ thuốc say xe cho khách không?,TIEN_ICH
+Xe có tivi để xem phim không?,TIEN_ICH
+Khoảng cách giữa các giường có rộng không?,TIEN_ICH
+Tôi muốn đổi vé sang ngày mai có mất phí không?,CHINH_SACH
+Nếu xe đến muộn thì tôi khiếu nại ở đâu?,CHINH_SACH
+Tôi lỡ chuyến xe thì có được hoàn tiền không?,CHINH_SACH
+Muốn hủy vé trước 2 tiếng thì xử lý thế nào?,CHINH_SACH
+Tôi bỏ quên điện thoại trên xe làm sao để lấy lại?,CHINH_SACH
+Tại sao giá vé trên web khác với nhân viên báo?,CHINH_SACH
+Có được đổi chỗ ngồi sau khi đã lên xe không?,CHINH_SACH
+Nếu xe hỏng dọc đường thì nhà xe xử lý thế nào?,CHINH_SACH
+Tôi muốn xuất hóa đơn đỏ cho công ty thì làm thế nào?,CHINH_SACH
+Nhà xe có cam kết không nhồi nhét khách không?,CHINH_SACH
+Tài xế có hút thuốc trên xe không?,CHINH_SACH
+Nhân viên phụ xe có thái độ không tốt thì báo cáo ai?,CHINH_SACH
+Tôi muốn thay đổi số điện thoại nhận vé thì làm sao?,CHINH_SACH
+Có được mang đồ ăn mùi lên xe không?,CHINH_SACH
+Vé đã mua có thể chuyển nhượng cho người khác không?,CHINH_SACH
+Đi Hà Giang,CAU_HOI_BAY
+Tôi muốn đặt vé cho 2 người lớn 1 trẻ em và 1 xe máy tối thứ 6,CAU_HOI_BAY
+Nhà xe Vũ Hán có tốt bằng nhà xe khác không?,CAU_HOI_BAY
+Alo xe chạy chưa?,CAU_HOI_BAY
+Có chỗ nằm tầng 1 gần tài xế không tôi bị say xe nặng?,CAU_HOI_BAY
+Price for ticket?,CAU_HOI_BAY
+Gửi hàng về Bắc Quang giá rẻ nhất là bao nhiêu?,CAU_HOI_BAY
+Tại sao tôi gọi tổng đài mãi không ai nghe máy?,CAU_HOI_BAY
+Xe có đón ở cổng bệnh viện Bạch Mai không?,CAU_HOI_BAY
+Tôi muốn đi vào ngày 30 tháng 2,CAU_HOI_BAY
+Cho hỏi xe của hãng nào mà chạy ẩu thế?,CAU_HOI_BAY
+Có xe đi từ Hà Giang về Hải Phòng không?,CAU_HOI_BAY
+Tư vấn cho tôi chuyến đi du lịch Hà Giang 3 ngày 2 đêm,CAU_HOI_BAY
+Đặt vé xong có tin nhắn xác nhận về điện thoại luôn không?,CAU_HOI_BAY
+Nhà xe có hỗ trợ đặt phòng khách sạn ở Đồng Văn không?,CAU_HOI_BAY
