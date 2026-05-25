@@ -18,10 +18,18 @@ const router = Router();
 // Helper: Lấy đường dẫn gốc của knowledge store
 const getKnowledgeRoot = (operatorId: string): string => {
   const rootEnv = process.env.KNOWLEDGE_ROOT;
-  const root = rootEnv 
-    ? path.resolve(process.cwd(), rootEnv)
-    : path.join(process.cwd(), 'knowledge');
-  return path.join(root, 'operators', operatorId);
+  if (rootEnv) {
+    const envRoot = path.resolve(process.cwd(), rootEnv);
+    if (fs.existsSync(envRoot)) return path.join(envRoot, 'operators', operatorId);
+  }
+
+  // Fallback 1: process.cwd() (thường đúng trên Vercel: /var/task)
+  const cwdRoot = path.join(process.cwd(), 'knowledge');
+  if (fs.existsSync(cwdRoot)) return path.join(cwdRoot, 'operators', operatorId);
+
+  // Fallback 2: dựa vào __dirname (thường đúng dưới local)
+  const dirRoot = path.join(__dirname, '../../../knowledge');
+  return path.join(dirRoot, 'operators', operatorId);
 };
 
 // Helper: Đảm bảo path không vượt ra ngoài thư mục gốc (path traversal prevention)

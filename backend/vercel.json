@@ -1,12 +1,14 @@
 {
   "version": 2,
+  "functions": {
+    "src/index.ts": {
+      "includeFiles": "knowledge/**"
+    }
+  },
   "builds": [
     {
       "src": "src/index.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": "knowledge/**"
-      }
+      "use": "@vercel/node"
     }
   ],
   "routes": [
