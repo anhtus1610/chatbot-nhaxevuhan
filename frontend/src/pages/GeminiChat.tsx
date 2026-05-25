@@ -10,7 +10,7 @@ import {
   User,
   Bot
 } from 'lucide-react'
-import { sendMessageStream } from '../services/api'
+import { sendMessage } from '../services/api'
 import SuggestionCard from '../components/SuggestionCard'
 import { useChat } from '../context/ChatContext'
 
@@ -71,89 +71,29 @@ export default function GeminiChat() {
     setLoading(true)
 
     try {
-      const reader = await sendMessageStream({
+      const response = await sendMessage({
         sessionId: sessionId!,
         message: text.trim()
       })
 
-      if (!reader) {
-        throw new Error('No response body')
-      }
-
-      const decoder = new TextDecoder()
-      let accumulatedText = ''
-      let buffer = ''
-
-      while (true) {
-        const { value, done } = await reader.read()
-        
-        if (value) {
-          buffer += decoder.decode(value, { stream: !done })
-        }
-        
-        const lines = buffer.split('\n')
-        buffer = lines.pop() || ''
-
-        for (const line of lines) {
-          const trimmed = line.trim()
-          if (trimmed.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(trimmed.slice(6))
-              if (data.type === 'text') {
-                accumulatedText += data.content
-                setStreamingContent(accumulatedText)
-              } else if (data.type === 'done') {
-                if (data.content) accumulatedText = data.content
-              }
-            } catch (e) {
-              console.error('Error parsing SSE line:', e)
-            }
-          }
-        }
-
-        if (done) {
-          // Process remaining buffer
-          if (buffer.trim()) {
-            const trimmed = buffer.trim()
-            if (trimmed.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(trimmed.slice(6))
-                if (data.type === 'text') {
-                  accumulatedText += data.content
-                  setStreamingContent(accumulatedText)
-                } else if (data.type === 'done') {
-                  if (data.content) accumulatedText = data.content
-                }
-              } catch (e) {
-                console.error('Error parsing SSE line in flush:', e)
-              }
-            }
-          }
-          break
-        }
-      }
-
-      // After stream ends, save to context
-      if (accumulatedText) {
-        addMessage({
-          role: 'assistant' as const,
-          content: accumulatedText,
-          timestamp: new Date()
-        })
-      }
+      addMessage({
+        role: 'assistant' as const,
+        content: response.reply,
+        timestamp: new Date()
+      })
     } catch (error) {
       console.error('Chat error:', error)
-      const errorMessage = {
+      addMessage({
         role: 'assistant' as const,
         content: 'Xin lỗi, tôi gặp sự cố khi kết nối. Bạn thử lại sau nhé!',
         timestamp: new Date()
-      }
-      addMessage(errorMessage)
+      })
     } finally {
       setLoading(false)
       setStreamingContent('')
     }
   }
+
 
   const suggestions = [
     { text: 'Xe limousine đi Hà Giang giá bao nhiêu?', icon: Bus },
