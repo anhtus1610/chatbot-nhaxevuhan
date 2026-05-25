@@ -1,8 +1,8 @@
 {
   "version": 2,
   "functions": {
-    "src/index.ts": {
-      "includeFiles": "knowledge/**"
+    "backend/src/index.ts": {
+      "includeFiles": "backend/knowledge/**"
     }
   },
   "routes": [
