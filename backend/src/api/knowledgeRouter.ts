@@ -17,7 +17,10 @@ const router = Router();
 
 // Helper: Lấy đường dẫn gốc của knowledge store
 const getKnowledgeRoot = (operatorId: string): string => {
-  const root = process.env.KNOWLEDGE_ROOT || path.join(__dirname, '../../../knowledge');
+  const rootEnv = process.env.KNOWLEDGE_ROOT;
+  const root = rootEnv 
+    ? path.resolve(process.cwd(), rootEnv)
+    : path.join(process.cwd(), 'knowledge');
   return path.join(root, 'operators', operatorId);
 };
 
