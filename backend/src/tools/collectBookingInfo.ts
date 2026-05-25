@@ -126,25 +126,37 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
 
   if (!customer_name) missingFields.push('customer_name');
   
-  if (!phone_number) {
+  if (phone_number === undefined || phone_number === null || String(phone_number).trim() === '') {
     missingFields.push('phone_number');
   } else {
-    // Validate Vietnam phone number
+    // Validate Vietnam phone number safely
+    const phoneStr = String(phone_number);
     const phoneRegex = /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/;
-    if (!phoneRegex.test(phone_number.replace(/[\s\-\.]/g, ''))) {
+    if (!phoneRegex.test(phoneStr.replace(/[\s\-\.]/g, ''))) {
       missingFields.push('phone_number');
       validationMessages.push('Số điện thoại không đúng định dạng Việt Nam. Bắt buộc: AI thông báo cho khách lỗi này và yêu cầu khách nhập lại số điện thoại hợp lệ (10 số).');
     }
   }
 
-  if (!departure_date) {
+  if (departure_date === undefined || departure_date === null || String(departure_date).trim() === '') {
     missingFields.push('departure_date');
   } else {
     // Validate date is not in the past
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const dateObj = new Date(departure_date);
-    if (dateObj.getTime() < today.getTime()) {
+    
+    // Auto convert DD-MM-YYYY or DD/MM/YYYY to YYYY-MM-DD
+    let parsedDateStr = String(departure_date);
+    const dateParts = parsedDateStr.split(/[-/]/);
+    if (dateParts.length === 3 && dateParts[0].length <= 2) {
+      parsedDateStr = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+    }
+    const dateObj = new Date(parsedDateStr);
+    
+    if (isNaN(dateObj.getTime())) {
+      missingFields.push('departure_date');
+      validationMessages.push('Ngày đi không nhận dạng được. Bắt buộc: AI thông báo lỗi này và yêu cầu khách xác nhận lại ngày đi.');
+    } else if (dateObj.getTime() < today.getTime()) {
       missingFields.push('departure_date');
       validationMessages.push('Ngày đi không hợp lệ vì nằm trong quá khứ. Bắt buộc: AI thông báo cho khách lỗi này và yêu cầu khách chọn lại ngày đi (từ hôm nay trở đi).');
     }
@@ -153,11 +165,14 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
   if (!departure_time) missingFields.push('departure_time');
   if (!vehicle_type) missingFields.push('vehicle_type');
   
-  if (!ticket_count) {
+  if (ticket_count === undefined || ticket_count === null || ticket_count === '') {
     missingFields.push('ticket_count');
-  } else if (ticket_count <= 0) {
-    missingFields.push('ticket_count');
-    validationMessages.push('Số lượng vé không hợp lệ. Bắt buộc: AI thông báo lỗi này và yêu cầu khách nhập lại số lượng lớn hơn 0.');
+  } else {
+    const count = Number(ticket_count);
+    if (isNaN(count) || count <= 0) {
+      missingFields.push('ticket_count');
+      validationMessages.push('Số lượng vé không hợp lệ. Bắt buộc: AI thông báo lỗi này và yêu cầu khách nhập lại số lượng lớn hơn 0.');
+    }
   }
 
   let status: BookingInfo['status'] = missingFields.length === 0 ? 'complete' : 'incomplete';
