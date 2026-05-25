@@ -123,11 +123,37 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
   const missingFields: string[] = [];
 
   if (!customer_name) missingFields.push('customer_name');
-  if (!phone_number) missingFields.push('phone_number');
-  if (!departure_date) missingFields.push('departure_date');
+  
+  if (!phone_number) {
+    missingFields.push('phone_number');
+  } else {
+    // Validate Vietnam phone number
+    const phoneRegex = /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/;
+    if (!phoneRegex.test(phone_number.replace(/[\s\-\.]/g, ''))) {
+      missingFields.push('invalid_phone');
+    }
+  }
+
+  if (!departure_date) {
+    missingFields.push('departure_date');
+  } else {
+    // Validate date is not in the past
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dateObj = new Date(departure_date);
+    if (dateObj.getTime() < today.getTime()) {
+      missingFields.push('invalid_date_past');
+    }
+  }
+
   if (!departure_time) missingFields.push('departure_time');
   if (!vehicle_type) missingFields.push('vehicle_type');
-  if (!ticket_count) missingFields.push('ticket_count');
+  
+  if (!ticket_count) {
+    missingFields.push('ticket_count');
+  } else if (ticket_count <= 0) {
+    missingFields.push('invalid_ticket_count');
+  }
 
   let status: BookingInfo['status'] = missingFields.length === 0 ? 'complete' : 'incomplete';
   let suggestedTimes: string[] | undefined = undefined;
