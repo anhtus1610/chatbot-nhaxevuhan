@@ -18,17 +18,31 @@ const router = Router();
 // Helper: Lấy đường dẫn gốc của knowledge store
 const getKnowledgeRoot = (operatorId: string): string => {
   const rootEnv = process.env.KNOWLEDGE_ROOT;
+
+  console.log('[KnowledgeRoot] DEBUG', {
+    KNOWLEDGE_ROOT: rootEnv,
+    cwd: process.cwd(),
+    __dirname,
+    operatorId,
+  });
+
   if (rootEnv) {
     const envRoot = path.resolve(process.cwd(), rootEnv);
-    if (fs.existsSync(envRoot)) return path.join(envRoot, 'operators', operatorId);
+    const envExists = fs.existsSync(envRoot);
+    console.log(`[KnowledgeRoot] KNOWLEDGE_ROOT path: ${envRoot} | exists: ${envExists}`);
+    if (envExists) return path.join(envRoot, 'operators', operatorId);
   }
 
-  // Fallback 1: process.cwd() (thường đúng trên Vercel: /var/task)
+  // Fallback 1: process.cwd()
   const cwdRoot = path.join(process.cwd(), 'knowledge');
-  if (fs.existsSync(cwdRoot)) return path.join(cwdRoot, 'operators', operatorId);
+  const cwdExists = fs.existsSync(cwdRoot);
+  console.log(`[KnowledgeRoot] cwd fallback: ${cwdRoot} | exists: ${cwdExists}`);
+  if (cwdExists) return path.join(cwdRoot, 'operators', operatorId);
 
-  // Fallback 2: dựa vào __dirname (thường đúng dưới local)
+  // Fallback 2: __dirname
   const dirRoot = path.join(__dirname, '../../../knowledge');
+  const dirExists = fs.existsSync(dirRoot);
+  console.log(`[KnowledgeRoot] __dirname fallback: ${dirRoot} | exists: ${dirExists}`);
   return path.join(dirRoot, 'operators', operatorId);
 };
 
@@ -77,9 +91,18 @@ router.get('/:operator_id/knowledge/docs', (req: Request, res: Response) => {
     const { operator_id } = req.params;
     const knowledgePath = getKnowledgeRoot(operator_id);
 
+    console.log(`[knowledge/docs] resolved path: ${knowledgePath} | exists: ${fs.existsSync(knowledgePath)}`);
+
     if (!fs.existsSync(knowledgePath)) {
       return res.status(404).json({
         error: { code: 'operator_not_found', message: `Không tìm thấy operator: ${operator_id}` },
+        // Debug info — xóa sau khi debug xong
+        _debug: {
+          resolvedPath: knowledgePath,
+          cwd: process.cwd(),
+          __dirname,
+          KNOWLEDGE_ROOT: process.env.KNOWLEDGE_ROOT || null,
+        },
       });
     }
 
