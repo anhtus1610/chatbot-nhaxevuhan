@@ -598,24 +598,37 @@ class KnowledgeService {
   searchQA(query: string, limit = 5): QAEntry[] {
     const normalizedQuery = query.toLowerCase();
     const queryWords = normalizedQuery.split(/\s+/).filter(w => w.length > 2);
+    if (queryWords.length === 0) return [];
 
-    return this.qaPairs
-      .filter(qa => {
-        const qLower = qa.question.toLowerCase();
-        const aLower = qa.answer.toLowerCase();
-        return queryWords.some(word => qLower.includes(word) || aLower.includes(word));
-      })
+    const scoredQA = this.qaPairs.map(qa => {
+      const qLower = qa.question.toLowerCase();
+      const aLower = qa.answer.toLowerCase();
+      
+      let matchCount = 0;
+      for (const word of queryWords) {
+        if (qLower.includes(word) || aLower.includes(word)) {
+          matchCount++;
+        }
+      }
+      return { qa, score: matchCount / queryWords.length };
+    });
+
+    return scoredQA
+      .filter(item => item.score >= 0.5) // Require at least 50% of words to match
+      .sort((a, b) => b.score - a.score)
+      .map(item => item.qa)
       .slice(0, limit);
   }
 
-  /**
-   * Tìm kiếm lộ trình theo từ khóa
-   */
   searchRoutes(query: string): RouteEntry[] {
-    const q = query.toLowerCase();
-    return this.routes.filter(
-      r => r.name.toLowerCase().includes(q) || r.content.toLowerCase().includes(q)
-    );
+    const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+    if (queryWords.length === 0) return this.routes;
+
+    return this.routes.filter(r => {
+      const name = r.name.toLowerCase();
+      const content = r.content.toLowerCase();
+      return queryWords.every(word => name.includes(word) || content.includes(word));
+    });
   }
 
   /** Lấy tất cả lộ trình */

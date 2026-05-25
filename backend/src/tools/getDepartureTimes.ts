@@ -193,6 +193,11 @@ export async function getDepartureTimes(
   const routeMatches: RouteEntry[] = knowledgeService.searchRoutes(`${from} ${to}`);
   const routeInfo = routeMatches.length > 0 ? routeMatches[0].content : undefined;
 
+  // Ưu tiên routeInfo hơn là qaResponse nếu không có departures (vì qa có thể match bậy)
+  if (routeInfo && !departures.length) {
+    qaResponse = routeInfo;
+  }
+
   const hasDirectAnswer = departures.length > 0 || !!qaResponse;
 
   return {
@@ -200,7 +205,7 @@ export async function getDepartureTimes(
     from: normalizedFrom.canonical,
     to: normalizedTo.canonical,
     departures,
-    source: departures.length > 0 ? 'markdown_schedule' : (qaResponse ? 'markdown_qa' : 'not_found'),
+    source: departures.length > 0 ? 'markdown_schedule' : (routeInfo ? 'markdown_route' : (qaResponse ? 'markdown_qa' : 'not_found')),
     qa_response: qaResponse,
     route_info: routeInfo,
     has_direct_answer: hasDirectAnswer,
