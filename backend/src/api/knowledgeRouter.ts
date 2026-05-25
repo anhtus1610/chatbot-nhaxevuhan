@@ -24,7 +24,7 @@ const getKnowledgeRoot = (operatorId: string): string => {
     cwd: process.cwd(),
     __dirname,
     operatorId,
-  });;
+  });
 
   if (rootEnv) {
     const envRoot = path.resolve(process.cwd(), rootEnv);

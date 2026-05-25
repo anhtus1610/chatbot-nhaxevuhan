@@ -5,12 +5,6 @@
       "includeFiles": "knowledge/**"
     }
   },
-  "builds": [
-    {
-      "src": "src/index.ts",
-      "use": "@vercel/node"
-    }
-  ],
   "routes": [
     {
       "src": "/(.*)",
