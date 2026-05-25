@@ -19,6 +19,7 @@ export interface BookingInfo {
   missing_fields: string[];
   confirmation_message?: string;
   suggested_times?: string[];
+  validation_messages?: string[];
 }
 
 import prisma from '../utils/prisma';
@@ -121,6 +122,7 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
   } = args;
 
   const missingFields: string[] = [];
+  const validationMessages: string[] = []; // Dành cho AI đọc để thông báo lại khách
 
   if (!customer_name) missingFields.push('customer_name');
   
@@ -130,7 +132,8 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
     // Validate Vietnam phone number
     const phoneRegex = /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/;
     if (!phoneRegex.test(phone_number.replace(/[\s\-\.]/g, ''))) {
-      missingFields.push('invalid_phone');
+      missingFields.push('phone_number');
+      validationMessages.push('Số điện thoại không đúng định dạng Việt Nam. Bắt buộc: AI thông báo cho khách lỗi này và yêu cầu khách nhập lại số điện thoại hợp lệ (10 số).');
     }
   }
 
@@ -142,7 +145,8 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
     today.setHours(0, 0, 0, 0);
     const dateObj = new Date(departure_date);
     if (dateObj.getTime() < today.getTime()) {
-      missingFields.push('invalid_date_past');
+      missingFields.push('departure_date');
+      validationMessages.push('Ngày đi không hợp lệ vì nằm trong quá khứ. Bắt buộc: AI thông báo cho khách lỗi này và yêu cầu khách chọn lại ngày đi (từ hôm nay trở đi).');
     }
   }
 
@@ -152,7 +156,8 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
   if (!ticket_count) {
     missingFields.push('ticket_count');
   } else if (ticket_count <= 0) {
-    missingFields.push('invalid_ticket_count');
+    missingFields.push('ticket_count');
+    validationMessages.push('Số lượng vé không hợp lệ. Bắt buộc: AI thông báo lỗi này và yêu cầu khách nhập lại số lượng lớn hơn 0.');
   }
 
   let status: BookingInfo['status'] = missingFields.length === 0 ? 'complete' : 'incomplete';
@@ -183,7 +188,8 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
     ticket_count,
     status,
     missing_fields: missingFields,
-    suggested_times: suggestedTimes
+    suggested_times: suggestedTimes,
+    validation_messages: validationMessages.length > 0 ? validationMessages : undefined
   };
 
   if (status === 'complete') {
