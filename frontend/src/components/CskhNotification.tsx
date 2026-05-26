@@ -67,7 +67,7 @@ export default function CskhNotification() {
   }, [])
 
   const markRead = async (id: string) => {
-    await api.patch(`/v1/admin/cskh/${id}/read`)
+    await api.patch(`/v1/admin/cskh/${encodeURIComponent(id)}/read`)
     setRequests(prev => prev.map(r => r.id === id ? { ...r, isRead: true } : r))
     setUnreadCount(prev => Math.max(0, prev - 1))
   }
