@@ -172,6 +172,21 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
     if (isNaN(count) || count <= 0) {
       missingFields.push('ticket_count');
       validationMessages.push('Số lượng vé không hợp lệ. Bắt buộc: AI thông báo lỗi này và yêu cầu khách nhập lại số lượng lớn hơn 0.');
+    } else if (vehicle_type) {
+      if (vehicle_type === 'vip' && count > 9) {
+        missingFields.push('ticket_count');
+        validationMessages.push(`Số lượng ${count} vé vượt quá sức chứa của 1 xe VIP (tối đa 9 chỗ). Bắt buộc: AI thông báo cho khách và gợi ý tách ra nhiều xe hoặc đổi loại xe.`);
+      } else if (vehicle_type === 'ghe' && count > 29) {
+        missingFields.push('ticket_count');
+        validationMessages.push(`Số lượng ${count} vé vượt quá sức chứa của 1 xe ghế ngồi (tối đa 29 chỗ). Bắt buộc: AI thông báo cho khách và gợi ý tách ra nhiều xe hoặc đổi loại xe.`);
+      } else if (vehicle_type === 'giuong' && count > 40) {
+        missingFields.push('ticket_count');
+        validationMessages.push(`Số lượng ${count} vé vượt quá sức chứa của 1 xe giường nằm (tối đa 40 chỗ). Bắt buộc: AI thông báo cho khách và gợi ý tách ra nhiều xe.`);
+      }
+    } else if (count > 40) {
+      // Chưa chọn loại xe nhưng đặt > 40 vé thì chắc chắn quá 1 xe
+      missingFields.push('ticket_count');
+      validationMessages.push(`Số lượng ${count} vé vượt quá sức chứa của 1 xe bất kỳ (tối đa 40 chỗ). Bắt buộc: AI thông báo cho khách và gợi ý tách ra nhiều xe.`);
     }
   }
 
