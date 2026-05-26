@@ -67,6 +67,12 @@ export default function CskhNotification() {
   }, [])
 
   const markRead = async (id: string) => {
+    // Validate ID to prevent path traversal/tainted data warnings from SonarQube
+    if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+      console.warn('Invalid ID format');
+      return;
+    }
+    
     await api.patch(`/v1/admin/cskh/${encodeURIComponent(id)}/read`)
     setRequests(prev => prev.map(r => r.id === id ? { ...r, isRead: true } : r))
     setUnreadCount(prev => Math.max(0, prev - 1))
