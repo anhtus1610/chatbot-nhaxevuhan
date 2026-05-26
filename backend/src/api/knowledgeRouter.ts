@@ -18,6 +18,11 @@ const router = Router();
 // Helper: Lấy đường dẫn gốc của knowledge store
 // Lưu ý: trên Vercel, process.cwd() = /var/task (root của repo), không phải thư mục backend/
 const getKnowledgeRoot = (operatorId: string): string => {
+  // BẢO MẬT: Chặn Path Traversal thông qua operatorId (ngăn chặn các ký tự lạ như ../, *, v.v.)
+  if (!/^[a-zA-Z0-9_-]+$/.test(operatorId)) {
+    throw new Error('Invalid operatorId format');
+  }
+
   const rootEnv = process.env.KNOWLEDGE_ROOT;
 
   if (rootEnv) {
