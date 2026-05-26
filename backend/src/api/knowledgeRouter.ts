@@ -37,7 +37,11 @@ const getKnowledgeRoot = (operatorId: string): string => {
 // Helper: Đảm bảo path không vượt ra ngoài thư mục gốc (path traversal prevention)
 const resolveSafePath = (base: string, relative: string): string | null => {
   const resolved = path.resolve(base, relative);
-  if (!resolved.startsWith(path.resolve(base))) return null;
+  const relativeFromBase = path.relative(base, resolved);
+  // Ensure the relative path does not start with '..' and is not absolute
+  if (relativeFromBase.startsWith('..') || path.isAbsolute(relativeFromBase)) {
+    return null;
+  }
   return resolved;
 };
 
