@@ -175,12 +175,20 @@ export async function getDepartureTimes(
   for (const query of queries) {
     const matches = knowledgeService.searchQA(query, 10);
 
-    // Ưu tiên câu hỏi có chứa từ "mấy giờ" hoặc "chuyến"
-    const scheduleMatch = matches.find(qa =>
-      qa.question.toLowerCase().includes('mấy giờ') ||
-      qa.question.toLowerCase().includes('chuyến') ||
-      qa.question.toLowerCase().includes('giờ')
-    );
+    const scheduleMatch = matches.find(qa => {
+      const qLower = qa.question.toLowerCase();
+      const isTimeQuery = qLower.includes('mấy giờ') || qLower.includes('chuyến') || qLower.includes('giờ');
+      
+      // Bắt buộc câu hỏi trong Q&A phải chứa địa danh (trừ Hà Nội là trạm chung)
+      // Điều này ngăn chặn việc hỏi "Hà Giang" nhưng lại match trúng "Hà Nội đi Đồng Văn"
+      const fromLower = from.toLowerCase();
+      const toLower = to.toLowerCase();
+      
+      if (fromLower && fromLower !== 'hà nội' && !qLower.includes(fromLower)) return false;
+      if (toLower && toLower !== 'hà nội' && !qLower.includes(toLower)) return false;
+      
+      return isTimeQuery;
+    });
 
     if (scheduleMatch && !qaResponse) {
       qaResponse = scheduleMatch.answer;
@@ -193,8 +201,9 @@ export async function getDepartureTimes(
   const routeMatches: RouteEntry[] = knowledgeService.searchRoutes(`${from} ${to}`);
   const routeInfo = routeMatches.length > 0 ? routeMatches[0].content : undefined;
 
-  // Ưu tiên routeInfo hơn là qaResponse nếu không có departures (vì qa có thể match bậy)
-  if (routeInfo && !departures.length) {
+  // Ưu tiên sử dụng qaResponse nếu đã tìm thấy (vì nó cực kỳ chính xác)
+  // Chỉ dùng routeInfo nếu qaResponse bị rỗng
+  if (!qaResponse && routeInfo && !departures.length) {
     qaResponse = routeInfo;
   }
 
