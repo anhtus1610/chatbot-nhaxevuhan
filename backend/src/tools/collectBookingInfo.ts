@@ -193,8 +193,8 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
   let status: BookingInfo['status'] = missingFields.length === 0 ? 'complete' : 'incomplete';
   let suggestedTimes: string[] | undefined = undefined;
 
-  // Validate departure_time and vehicle_type if formal schedules exist
-  if (departure_time && pickup && dropoff) {
+  // Validate vehicle_type and departure_time if formal schedules exist
+  if (pickup && dropoff) {
     const allDeparturesInfo = await getDepartureTimes(operatorId, pickup, dropoff, 'all', departure_date);
     const deps = allDeparturesInfo.departures;
     
@@ -217,8 +217,8 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
         }
       }
       
-      // 2. Filter by departure_time
-      if (validDeps.length > 0) {
+      // 2. Filter by departure_time (chỉ kiểm tra khi vehicle_type hợp lệ hoặc không có vehicle_type)
+      if (validDeps.length > 0 && departure_time) {
          const availableTimes = validDeps.map(d => d.time);
          if (!availableTimes.includes(departure_time)) {
            status = 'invalid_time';
