@@ -193,16 +193,38 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
   let status: BookingInfo['status'] = missingFields.length === 0 ? 'complete' : 'incomplete';
   let suggestedTimes: string[] | undefined = undefined;
 
-  // Validate departure_time if provided
+  // Validate departure_time and vehicle_type if formal schedules exist
   if (departure_time && pickup && dropoff) {
-    const mappedVehicle = vehicle_type === 'vip' ? 'limousine' : (vehicle_type ? 'bus' : 'all');
-    const departuresInfo = await getDepartureTimes(operatorId, pickup, dropoff, mappedVehicle, departure_date);
-    if (departuresInfo.departures.length > 0) {
-      const availableTimes = departuresInfo.departures.map(d => d.time);
-      if (!availableTimes.includes(departure_time)) {
-        status = 'invalid_time';
-        suggestedTimes = availableTimes;
-        missingFields.push('departure_time');
+    const allDeparturesInfo = await getDepartureTimes(operatorId, pickup, dropoff, 'all', departure_date);
+    const deps = allDeparturesInfo.departures;
+    
+    if (deps.length > 0) {
+      // 1. Filter by vehicle_type
+      let validDeps = deps;
+      if (vehicle_type) {
+        validDeps = deps.filter(d => {
+          const lbl = d.vehicle_label.toLowerCase();
+          if (vehicle_type === 'vip') return lbl.includes('vip') || lbl.includes('limousine');
+          if (vehicle_type === 'giuong') return lbl.includes('giường');
+          if (vehicle_type === 'ghe') return lbl.includes('ghế');
+          return true;
+        });
+        
+        if (validDeps.length === 0) {
+           status = 'incomplete';
+           if (!missingFields.includes('vehicle_type')) missingFields.push('vehicle_type');
+           validationMessages.push(`Tuyến ${pickup} đi ${dropoff} không có loại xe ${getVehicleLabel(vehicle_type)}. Tuyến này chỉ có: ${[...new Set(deps.map(d => d.vehicle_label))].join(', ')}. Bắt buộc: AI thông báo cho khách lỗi này và yêu cầu đổi loại xe.`);
+        }
+      }
+      
+      // 2. Filter by departure_time
+      if (validDeps.length > 0) {
+         const availableTimes = validDeps.map(d => d.time);
+         if (!availableTimes.includes(departure_time)) {
+           status = 'invalid_time';
+           suggestedTimes = availableTimes;
+           if (!missingFields.includes('departure_time')) missingFields.push('departure_time');
+         }
       }
     }
   }
