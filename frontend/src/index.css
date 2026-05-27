@@ -119,8 +119,8 @@ button {
 }
 
 .icon-btn:hover {
-  background-color: var(--hover-bg);
-  color: var(--text-primary);
+  background-color: var(--brand-yellow-light);
+  color: var(--brand-yellow-hover);
 }
 
 .icon-btn.active {
@@ -148,8 +148,9 @@ button {
 }
 
 .new-chat-btn:hover {
-  background-color: var(--hover-bg);
-  color: var(--text-primary);
+  background-color: var(--brand-yellow-light);
+  color: var(--brand-yellow-hover);
+  border: 1px solid rgba(234, 179, 8, 0.4);
 }
 
 .new-chat-btn.collapsed {
@@ -192,9 +193,15 @@ button {
   margin: 0 auto 8px;
 }
 
-.nav-item:hover, .nav-item.active {
-  background-color: var(--hover-bg);
-  color: var(--text-primary);
+.nav-item:hover {
+  background-color: var(--brand-yellow-light);
+  color: var(--brand-yellow-hover);
+}
+
+.nav-item.active {
+  background-color: var(--brand-yellow-light);
+  color: var(--brand-blue);
+  font-weight: 500;
 }
 
 .sidebar-history {
@@ -235,13 +242,13 @@ button {
 }
 
 .history-item:hover {
-  background-color: var(--hover-bg);
-  color: var(--text-primary);
+  background-color: var(--brand-yellow-light);
+  color: var(--brand-yellow-hover);
 }
 
 .history-item.active {
-  background-color: var(--hover-bg);
-  color: var(--accent-primary);
+  background-color: var(--brand-yellow-light);
+  color: var(--brand-blue);
   font-weight: 500;
 }
 
