@@ -93,7 +93,7 @@ async function saveBooking(booking: BookingInfo) {
         where: { customerId: customerId, status: { not: 'cancelled' } }
       });
       const totalTickets = allBookings.reduce((sum, b) => sum + (b.ticket_count || 1), 0);
-      
+
       await prisma.customer.update({
         where: { id: customerId },
         data: { total_tickets: totalTickets }
@@ -125,7 +125,7 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
   const validationMessages: string[] = []; // Dành cho AI đọc để thông báo lại khách
 
   if (!customer_name) missingFields.push('customer_name');
-  
+
   if (phone_number === undefined || phone_number === null || String(phone_number).trim() === '') {
     missingFields.push('phone_number');
   } else {
@@ -144,7 +144,7 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
     // Validate date is not in the past
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     // Auto convert DD-MM-YYYY or DD/MM/YYYY to YYYY-MM-DD
     let parsedDateStr = String(departure_date);
     const dateParts = parsedDateStr.split(/[-/]/);
@@ -152,7 +152,7 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
       parsedDateStr = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
     }
     const dateObj = new Date(parsedDateStr);
-    
+
     if (isNaN(dateObj.getTime())) {
       missingFields.push('departure_date');
       validationMessages.push('Ngày đi không nhận dạng được. Bắt buộc: AI thông báo lỗi này và yêu cầu khách xác nhận lại ngày đi.');
@@ -164,7 +164,7 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
 
   if (!departure_time) missingFields.push('departure_time');
   if (!vehicle_type) missingFields.push('vehicle_type');
-  
+
   if (ticket_count === undefined || ticket_count === null || ticket_count === '') {
     missingFields.push('ticket_count');
   } else {
