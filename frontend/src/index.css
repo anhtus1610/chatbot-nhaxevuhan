@@ -1,19 +1,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
 :root {
-  --bg-main: #131314;
-  --bg-surface: #1e1f20;
-  --bg-sidebar: #1e1f20;
-  --text-primary: #e3e3e3;
-  --text-secondary: #c4c7c5;
-  --accent-primary: #8ab4f8;
-  --accent-gradient: linear-gradient(90deg, #4285f4, #9b72cb, #d96570);
-  --border-color: #444746;
-  --hover-bg: #2d2f31;
-  --input-bg: #1e1f20;
-  --glass-bg: rgba(30, 31, 32, 0.7);
-  --btn-bg: #1a1b1c;
-  
+  /* ── Vũ Hán Brand Colors ──────────────────────────────────────────── */
+  --brand-yellow: #EAB308;         /* Primary Yellow - Vũ Hán */
+  --brand-yellow-hover: #CA8A04;   /* Yellow darker for hover */
+  --brand-yellow-light: #FEF9C3;   /* Yellow light tint */
+  --brand-blue: #1E3A8A;           /* Secondary Dark Blue */
+  --brand-blue-hover: #1e40af;     /* Blue slightly lighter for hover */
+  --brand-blue-light: #EFF6FF;     /* Blue very light tint */
+
+  /* ── Background Colors ─────────────────────────────────────────────── */
+  --bg-main: #F9FAFB;              /* Light gray - main background */
+  --bg-surface: #FFFFFF;           /* White - card/panel background */
+  --bg-sidebar: #FFFFFF;           /* White sidebar */
+  --text-primary: #111827;         /* Near-black text */
+  --text-secondary: #6B7280;       /* Gray for secondary text */
+  --accent-primary: #1E3A8A;       /* Dark blue accent */
+  --accent-gradient: linear-gradient(90deg, #EAB308, #CA8A04, #1E3A8A);
+  --border-color: #E5E7EB;         /* Light gray border */
+  --hover-bg: #F3F4F6;             /* Very light gray for hover */
+  --input-bg: #F9FAFB;             /* Same as bg-main for inputs */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --btn-bg: #F3F4F6;               /* Light button background */
+
   font-family: 'Roboto', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -52,11 +61,11 @@ button {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #444746;
+  background: #D1D5DB;
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #5f6368;
+  background: #9CA3AF;
 }
 
 /* Layout Classes */
@@ -272,8 +281,8 @@ button {
 }
 
 .logout-btn:hover {
-  background-color: rgba(242, 139, 130, 0.1);
-  color: #f28b82;
+  background-color: rgba(239, 68, 68, 0.08);
+  color: #DC2626;
 }
 
 .admin-login-link {
@@ -303,19 +312,19 @@ button {
   border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 36px 32px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 32px rgba(30, 58, 138, 0.12);
 }
 
 .admin-login-icon {
   width: 56px;
   height: 56px;
   border-radius: 16px;
-  background: rgba(138, 180, 248, 0.12);
-  border: 1px solid rgba(138, 180, 248, 0.25);
+  background: var(--brand-yellow-light);
+  border: 1px solid rgba(234, 179, 8, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent-primary);
+  color: var(--brand-yellow);
   margin: 0 auto 20px;
 }
 
@@ -373,9 +382,9 @@ button {
   gap: 8px;
   padding: 10px 14px;
   border-radius: 10px;
-  background-color: rgba(242, 139, 130, 0.1);
-  border: 1px solid rgba(242, 139, 130, 0.4);
-  color: #f28b82;
+  background-color: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #DC2626;
   font-size: 0.85rem;
   margin-top: 4px;
 }
@@ -444,11 +453,13 @@ button {
 }
 
 .avatar.bot {
-  color: var(--accent-primary);
+  background-color: var(--brand-blue);
+  color: #FFFFFF;
 }
 
 .avatar.user {
-  color: var(--text-primary);
+  background-color: var(--brand-yellow);
+  color: #FFFFFF;
 }
 
 .message-bubble {
@@ -460,8 +471,10 @@ button {
 
 .user-message {
   align-self: flex-end;
-  background-color: var(--hover-bg);
+  background-color: var(--brand-yellow-light);
+  border: 1px solid rgba(234, 179, 8, 0.3);
   border-radius: 18px 18px 4px 18px;
+  color: var(--text-primary);
 }
 
 .assistant-message {
@@ -480,7 +493,7 @@ button {
 .loading-dot {
   width: 6px;
   height: 6px;
-  background-color: var(--accent-primary);
+  background-color: var(--brand-yellow);
   border-radius: 50%;
 }
 
@@ -600,9 +613,9 @@ button {
 }
 
 .suggestion-card:hover {
-  background-color: var(--hover-bg);
+  background-color: var(--brand-blue-light);
   transform: translateY(-2px);
-  border-color: #5f6368;
+  border-color: var(--brand-blue);
 }
 
 .suggestion-card p {
@@ -718,12 +731,14 @@ button {
 }
 
 .btn-primary {
-  background-color: var(--accent-primary);
-  color: var(--bg-main);
+  background-color: var(--brand-yellow);
+  color: #1a1a1a;
+  font-weight: 600;
 }
 
 .btn-primary:hover {
-  background-color: #aecbfa;
+  background-color: var(--brand-yellow-hover);
+  color: #FFFFFF;
 }
 
 .btn-primary:disabled {
@@ -747,8 +762,9 @@ button {
 }
 
 .quick-route-btn:hover {
-  background-color: var(--hover-bg);
-  border-color: #5f6368;
+  background-color: var(--brand-blue-light);
+  border-color: var(--brand-blue);
+  color: var(--brand-blue);
 }
 
 .result-box {
@@ -816,13 +832,13 @@ button {
 }
 
 .badge-success {
-  background-color: rgba(129, 201, 149, 0.2);
-  color: #81c995;
+  background-color: rgba(22, 163, 74, 0.12);
+  color: #16A34A;
 }
 
 .badge-warning {
-  background-color: rgba(253, 214, 99, 0.2);
-  color: #fdd663;
+  background-color: var(--brand-yellow-light);
+  color: #92400E;
 }
 
 /* ─── Knowledge Editor ─────────────────────────────────────────────────────── */
@@ -940,8 +956,9 @@ button {
 }
 
 .ke-file-item.active {
-  background-color: rgba(138, 180, 248, 0.15);
-  color: var(--accent-primary);
+  background-color: var(--brand-blue-light);
+  color: var(--brand-blue);
+  font-weight: 500;
 }
 
 .ke-file-name {
@@ -1028,7 +1045,7 @@ button {
 
 .ke-dirty-indicator {
   font-size: 0.78rem;
-  color: #fdd663;
+  color: var(--brand-yellow);
   white-space: nowrap;
   animation: pulse 2s infinite;
 }
@@ -1127,10 +1144,10 @@ button {
   gap: 8px;
   margin: 16px;
   padding: 14px;
-  background-color: rgba(242, 139, 130, 0.1);
-  border: 1px solid #f28b82;
+  background-color: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 10px;
-  color: #f28b82;
+  color: #DC2626;
   font-size: 0.85rem;
 }
 
@@ -1139,9 +1156,9 @@ button {
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background-color: rgba(242, 139, 130, 0.1);
-  border-bottom: 1px solid rgba(242, 139, 130, 0.4);
-  color: #f28b82;
+  background-color: rgba(239, 68, 68, 0.06);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.3);
+  color: #DC2626;
   font-size: 0.85rem;
   flex-shrink: 0;
 }
@@ -1190,8 +1207,8 @@ button {
 }
 
 .bm-count {
-  background-color: rgba(138, 180, 248, 0.15);
-  color: var(--accent-primary);
+  background-color: var(--brand-yellow-light);
+  color: var(--brand-blue);
   font-weight: 600;
 }
 
@@ -1256,11 +1273,11 @@ button {
 }
 
 .bm-table th {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--brand-blue-light);
   padding: 14px 16px;
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--brand-blue);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 1px solid var(--border-color);
