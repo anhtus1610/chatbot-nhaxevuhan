@@ -6,5 +6,6 @@
     "types": ["node", "@playwright/test"], 
     "esModuleInterop": true,
     "skipLibCheck": true
-  }
+  },
+  "exclude": ["node_modules", "backend"]
 }
