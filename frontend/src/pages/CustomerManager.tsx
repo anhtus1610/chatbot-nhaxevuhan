@@ -8,6 +8,7 @@ interface CustomerData {
   id: string;
   name: string;
   phone: string;
+  email?: string;
   total_tickets: number;
   updatedAt: string;
 }
@@ -48,7 +49,8 @@ export default function CustomerManager() {
     const s = search.toLowerCase()
     return (
       (c.name?.toLowerCase().includes(s)) ||
-      (c.phone?.includes(s))
+      (c.phone?.includes(s)) ||
+      (c.email?.toLowerCase().includes(s))
     )
   })
 
@@ -103,6 +105,7 @@ export default function CustomerManager() {
                 <tr>
                   <th>Tên khách hàng</th>
                   <th>Số điện thoại</th>
+                  <th>Email</th>
                   <th>Tổng số vé đã đặt</th>
                   <th>Lần giao dịch cuối</th>
                 </tr>
@@ -116,6 +119,7 @@ export default function CustomerManager() {
                         <Phone size={14} /> <span>{c.phone}</span>
                       </div>
                     </td>
+                    <td className="bm-col-email" style={{ fontSize: '13px', color: '#9ca3af' }}>{c.email || '—'}</td>
                     <td className="bm-col-ticket">
                       <span className="bm-ticket-count">{c.total_tickets} vé</span>
                     </td>

@@ -148,6 +148,7 @@ export interface BookingData {
   createdAt: string
   customer_name?: string
   phone_number?: string
+  email?: string
   pickup: string
   dropoff: string
   departure_date?: string

@@ -1,13 +1,22 @@
+<<<<<<< HEAD
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+.env
+=======
 # Dependencies
 node_modules/
 
-# Environment variables local (chứa API keys secrets - KHÔNG commit)
+# Environment variables (chứa API keys, secrets)
 .env
+.env.*
 .env.local
 .env.*.local
-
-# .env.production được COMMIT vào git để Vercel dùng khi build
-# (Không chứa secrets cực kỳ nhạy cảm, chỉ config production)
 
 # Build output
 dist/
@@ -33,14 +42,8 @@ npm-debug.log*
 *.tsbuildinfo
 
 # Prisma
-# prisma/migrations/ - cần commit migrations để deploy
-
-# Test
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
-/playwright/.auth/
+prisma/migrations/
 
 # Misc
 .cache/
+>>>>>>> 3234724ed931baacb83ffb3f93f6d07bced12761

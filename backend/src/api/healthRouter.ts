@@ -52,31 +52,21 @@ router.get('/knowledge', async (req: Request, res: Response) => {
 // GET /api/health/db — Kiểm tra kết nối PostgreSQL (Prisma)
 router.get('/db', async (req: Request, res: Response) => {
   const dbUrl = process.env.DATABASE_URL;
+  const safeUrl = dbUrl ? dbUrl.replace(/:([^@]+)@/, ':***@') : 'NOT SET';
 
   if (!dbUrl) {
-    return res.status(500).json({
-      status: 'error',
-      error: 'DATABASE_URL chưa được set trong Vercel Environment Variables',
-      hint: 'Vào Vercel Dashboard → Project Settings → Environment Variables'
-    });
+    return res.status(500).json({ status: 'error', error: 'DATABASE_URL chưa được set', host: safeUrl });
   }
-
-  // Che giấu password, chỉ hiện host
-  const safeUrl = dbUrl.replace(/:([^@]+)@/, ':***@');
 
   try {
     const prisma = (await import('../utils/prisma')).default;
     await prisma.$queryRaw`SELECT 1`;
-    res.json({
-      status: 'connected',
-      host: safeUrl,
-    });
+    res.json({ status: 'connected', host: safeUrl });
   } catch (err: any) {
     res.status(500).json({
       status: 'error',
       host: safeUrl,
-      error: err?.message || String(err),
-      hint: 'Kiểm tra DATABASE_URL có đúng format và password được URL-encode chưa'
+      error: err?.message || String(err)
     });
   }
 });

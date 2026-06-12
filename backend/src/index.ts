@@ -8,7 +8,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path';
 import { chatRouter } from './api/chatRouter';
 import { routeRouter } from './api/routeRouter';
 import { healthRouter } from './api/healthRouter';
@@ -17,21 +16,7 @@ import { bookingRouter } from './api/bookingRouter';
 import { customerRouter } from './api/customerRouter';
 import { cskhRouter } from './api/cskhRouter';
 
-// Load env file phù hợp với môi trường
-// Trên Vercel: env vars đã được set qua Dashboard, dotenv chỉ dùng khi local
-if (process.env.NODE_ENV === 'production') {
-  dotenv.config({ path: path.resolve(__dirname, '../.env.production') });
-} else {
-  dotenv.config();
-}
-
-// Kiểm tra các env var quan trọng khi khởi động
-const requiredEnvVars = ['DATABASE_URL', 'OPENAI_API_KEY'];
-const missingVars = requiredEnvVars.filter(v => !process.env[v]);
-if (missingVars.length > 0) {
-  console.error(`⚠️  Thiếu environment variables: ${missingVars.join(', ')}`);
-  console.error('   → Vào Vercel Dashboard → Settings → Environment Variables để thêm');
-}
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 14556;
