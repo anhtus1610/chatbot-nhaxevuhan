@@ -139,7 +139,7 @@ export const tools: ChatCompletionTool[] = [
     type: 'function',
     function: {
       name: 'collect_booking_info',
-      description: 'Thu thập và xác nhận thông tin đặt vé của khách. Sử dụng khi khách muốn đặt vé, giữ chỗ.',
+      description: 'Thu thập và xác nhận thông tin đặt vé của khách. Sử dụng khi khách muốn đặt vé, giữ chỗ. Bắt buộc phải thu thập đủ: tên, SĐT, email, điểm đón, điểm trả, ngày đi, giờ đi, loại xe, số vé.',
       parameters: {
         type: 'object',
         properties: {
@@ -150,6 +150,10 @@ export const tools: ChatCompletionTool[] = [
           phone_number: {
             type: 'string',
             description: 'Số điện thoại liên hệ'
+          },
+          email: {
+            type: 'string',
+            description: 'Địa chỉ email của khách hàng để nhận xác nhận đặt vé (bắt buộc)'
           },
           pickup: {
             type: 'string',

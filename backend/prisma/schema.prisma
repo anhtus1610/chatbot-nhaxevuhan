@@ -13,6 +13,7 @@ model Booking {
   createdAt          DateTime @default(now())
   customer_name      String?
   phone_number       String?
+  email              String?
   pickup             String
   dropoff            String
   departure_date     String?
@@ -23,7 +24,8 @@ model Booking {
   missing_fields     String[]
   confirmation_message String?
   suggested_times    String[]
-  
+  email_sent         Boolean  @default(false)
+
   customerId         String?
   customer           Customer? @relation(fields: [customerId], references: [id])
 }
@@ -32,6 +34,7 @@ model Customer {
   id           String    @id @default(uuid())
   name         String
   phone        String    @unique
+  email        String?
   total_tickets Int      @default(0)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt

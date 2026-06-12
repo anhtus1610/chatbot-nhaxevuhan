@@ -9,6 +9,7 @@ import * as crypto from 'crypto';
 export interface BookingInfo {
   customer_name?: string;
   phone_number?: string;
+  email?: string;
   pickup: string;
   dropoff: string;
   departure_date?: string;
@@ -23,6 +24,8 @@ export interface BookingInfo {
 }
 
 import prisma from '../utils/prisma';
+import { EmailService } from '../services/emailService';
+
 
 // Helper to save booking to PostgreSQL
 async function saveBooking(booking: BookingInfo) {
@@ -58,6 +61,7 @@ async function saveBooking(booking: BookingInfo) {
         await prisma.booking.update({
           where: { id: existingBooking.id },
           data: {
+            email: booking.email,
             ticket_count: booking.ticket_count,
             vehicle_type: booking.vehicle_type,
             departure_time: booking.departure_time,
@@ -73,6 +77,7 @@ async function saveBooking(booking: BookingInfo) {
           data: {
             customer_name: booking.customer_name,
             phone_number: booking.phone_number,
+            email: booking.email,
             pickup: booking.pickup,
             dropoff: booking.dropoff,
             departure_date: booking.departure_date,
@@ -88,7 +93,15 @@ async function saveBooking(booking: BookingInfo) {
         });
       }
 
-      // 3. Recalculate total tickets for this customer
+      // 3. Upsert email vào Customer nếu có
+      if (booking.email) {
+        await prisma.customer.update({
+          where: { id: customerId },
+          data: { email: booking.email }
+        });
+      }
+
+      // 4. Recalculate total tickets for this customer
       const allBookings = await prisma.booking.findMany({
         where: { customerId: customerId, status: { not: 'cancelled' } }
       });
@@ -113,6 +126,7 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
   const {
     customer_name,
     phone_number,
+    email,
     pickup,
     dropoff,
     departure_date,
@@ -125,6 +139,18 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
   const validationMessages: string[] = []; // Dành cho AI đọc để thông báo lại khách
 
   if (!customer_name) missingFields.push('customer_name');
+
+  // Validate email (bắt buộc)
+  if (!email || String(email).trim() === '') {
+    missingFields.push('email');
+    validationMessages.push('Thiếu email. Bắt buộc: AI yêu cầu khách cung cấp địa chỉ email để nhận xác nhận đặt vé.');
+  } else {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(String(email).trim())) {
+      missingFields.push('email');
+      validationMessages.push('Email không đúng định dạng. Bắt buộc: AI thông báo lỗi và yêu cầu khách nhập lại email hợp lệ (ví dụ: abc@gmail.com).');
+    }
+  }
 
   if (phone_number === undefined || phone_number === null || String(phone_number).trim() === '') {
     missingFields.push('phone_number');
@@ -232,6 +258,7 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
   const result: BookingInfo = {
     customer_name,
     phone_number,
+    email: email ? String(email).trim() : undefined,
     pickup,
     dropoff,
     departure_date,
@@ -245,11 +272,15 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
   };
 
   if (status === 'complete') {
+    const emailNote = result.email
+      ? `\nEmail xác nhận đã được gửi đến: ${result.email}`
+      : '';
+
     result.confirmation_message = `Dạ em xác nhận đặt vé:
 • ${ticket_count || 1} vé ${getVehicleLabel(vehicle_type)} ${pickup} → ${dropoff}
 • Ngày: ${departure_date} - Chuyến: ${departure_time}
 • Tên: ${customer_name}
-• SĐT: ${phone_number}
+• SĐT: ${phone_number}${emailNote}
 
 Anh/chị chuyển khoản để giữ chỗ nhé ạ.
 Tìm Zalo OA "Xe khách Vũ Hán" (tích vàng) để xem thông tin thanh toán ạ.
@@ -257,6 +288,14 @@ Lái phụ xe sẽ liên hệ trước 1-2 tiếng hẹn điểm đón ạ. 🙏
 
     // Save to PostgreSQL Database
     await saveBooking(result);
+
+    // Gửi email xác nhận nếu có email
+    if (result.email) {
+      const emailSent = await EmailService.sendBookingConfirmation(result);
+      if (emailSent) {
+        console.log(`[collectBookingInfo] Email xác nhận đã gửi đến: ${result.email}`);
+      }
+    }
   }
 
   return result;
