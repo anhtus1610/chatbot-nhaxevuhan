@@ -165,6 +165,10 @@ router.get('/:operator_id/knowledge/doc', (req: Request, res: Response) => {
 // PUT /:operator_id/knowledge/doc — Cập nhật nội dung file
 // Body: { path: string, content: string, commit_message?: string }
 // ─────────────────────────────────────────────────────────────────────────────
+// In-memory cache để lưu tạm nội dung file khi chạy trên Vercel (filesystem read-only)
+// Trên Vercel: /var/task là read-only nên không thể writeFileSync thật sự
+const memoryCache = new Map<string, { content: string; updatedAt: string }>();
+
 router.put('/:operator_id/knowledge/doc', (req: Request, res: Response) => {
   try {
     const { operator_id } = req.params;
@@ -197,30 +201,79 @@ router.put('/:operator_id/knowledge/doc', (req: Request, res: Response) => {
       });
     }
 
-    // Tạo backup trước khi ghi đè
-    const backupPath = resolved + '.bak';
-    fs.copyFileSync(resolved, backupPath);
+    const cacheKey = `${operator_id}/${filePath}`;
+    const updatedAt = new Date().toISOString();
 
-    // Ghi nội dung mới (UTF-8)
-    fs.writeFileSync(resolved, content, 'utf-8');
+    try {
+      // Thử ghi vào filesystem (hoạt động khi chạy local)
+      const backupPath = resolved + '.bak';
+      fs.copyFileSync(resolved, backupPath);
+      fs.writeFileSync(resolved, content, 'utf-8');
+      const stat = fs.statSync(resolved);
 
-    const stat = fs.statSync(resolved);
+      // Lưu vào cache để read cũng nhất quán
+      memoryCache.set(cacheKey, { content, updatedAt: stat.mtime.toISOString() });
 
-    console.log(`[KnowledgeEditor] ✅ Updated: ${operator_id}/${filePath} — ${commit_message || 'no message'}`);
+      console.log(`[KnowledgeEditor] ✅ Updated (disk): ${operator_id}/${filePath} — ${commit_message || 'no message'}`);
 
-    res.json({
-      success: true,
-      operator_id,
-      path: filePath,
-      size: stat.size,
-      updatedAt: stat.mtime.toISOString(),
-      commit_message: commit_message || null,
-      backup_created: true,
-    });
+      res.json({
+        success: true,
+        operator_id,
+        path: filePath,
+        size: stat.size,
+        updatedAt: stat.mtime.toISOString(),
+        commit_message: commit_message || null,
+        backup_created: true,
+        storage: 'disk',
+      });
+    } catch (writeErr: any) {
+      // Trên Vercel: filesystem read-only (EROFS) → dùng in-memory cache
+      if (writeErr.code === 'EROFS' || writeErr.code === 'EACCES' || process.env.VERCEL === '1') {
+        memoryCache.set(cacheKey, { content, updatedAt });
+
+        console.log(`[KnowledgeEditor] ✅ Updated (memory): ${operator_id}/${filePath} — ${commit_message || 'no message'}`);
+
+        const encoder = new TextEncoder();
+        res.json({
+          success: true,
+          operator_id,
+          path: filePath,
+          size: encoder.encode(content).length,
+          updatedAt,
+          commit_message: commit_message || null,
+          backup_created: false,
+          storage: 'memory',
+          note: 'Vercel serverless: lưu tạm trong bộ nhớ (reset khi redeploy)',
+        });
+      } else {
+        throw writeErr;
+      }
+    }
   } catch (err) {
     console.error('[KnowledgeRouter] update doc error:', err);
-    res.status(500).json({ error: { code: 'internal_error', message: 'Lỗi hệ thống' } });
+    res.status(500).json({ error: { code: 'internal_error', message: 'Lỗi hệ thống khi lưu file' } });
   }
 });
 
+// Override GET để trả về từ memory cache nếu có (nhất quán với write)
+router.get('/:operator_id/knowledge/doc/cached', (req: Request, res: Response) => {
+  const { operator_id } = req.params;
+  const filePath = req.query.path as string;
+  const cacheKey = `${operator_id}/${filePath}`;
+
+  if (memoryCache.has(cacheKey)) {
+    const cached = memoryCache.get(cacheKey)!;
+    return res.json({
+      operator_id,
+      path: filePath,
+      content: cached.content,
+      updatedAt: cached.updatedAt,
+      source: 'memory_cache',
+    });
+  }
+
+  res.status(404).json({ error: { code: 'not_in_cache', message: 'Không có trong cache' } });
+});
+
 export { router as knowledgeRouter };
+
