@@ -14,7 +14,7 @@ import {
   Plus,
   Trash2
 } from 'lucide-react'
-import { sendMessage } from '../services/api'
+import { sendMessageStream } from '../services/api'
 import SuggestionCard from '../components/SuggestionCard'
 import { useChatStore, ChatSession, Message } from '../stores/chatStore'
 import { useUserStore, BookingHistoryItem } from '../stores/userStore'
@@ -75,7 +75,7 @@ export default function GeminiChat() {
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages])
+  }, [messages, streamingContent])
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -96,9 +96,10 @@ export default function GeminiChat() {
     addMessage(userMessage)
     setInput('')
     setLoading(true)
+    setStreamingContent('')
 
     try {
-      const response = await sendMessage({
+      const reader = await sendMessageStream({
         sessionId: sessionId!,
         message: text.trim(),
         user_profile: {
@@ -108,15 +109,59 @@ export default function GeminiChat() {
         }
       })
 
-      addMessage({
-        role: 'assistant' as const,
-        content: response.reply,
-        timestamp: new Date()
-      })
+      if (!reader) {
+        throw new Error('Failed to get stream reader')
+      }
 
-      // Automate saving of user profile and booking history from chatbot responses to Zustand localstorage
-      if (response.booking_data) {
-        const bd = response.booking_data
+      const decoder = new TextDecoder()
+      let accumulated = ''
+      let buffer = ''
+      let doneData: any = null
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+
+        // Parse SSE events from buffer
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || '' // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6))
+
+              if (data.type === 'text' && data.content) {
+                accumulated += data.content
+                setStreamingContent(accumulated)
+                scrollToBottom()
+              } else if (data.type === 'done') {
+                doneData = data
+                if (data.content && !accumulated) {
+                  accumulated = data.content
+                }
+              }
+            } catch (e) {
+              // Ignore parse errors for incomplete JSON
+            }
+          }
+        }
+      }
+
+      // Add the complete message to chat history
+      if (accumulated) {
+        addMessage({
+          role: 'assistant' as const,
+          content: accumulated,
+          timestamp: new Date()
+        })
+      }
+
+      // Handle booking data from done event
+      if (doneData?.data?.bookingData) {
+        const bd = doneData.data.bookingData
         const profileUpdates: any = {}
         if (bd.customer_name) profileUpdates.name = bd.customer_name
         if (bd.phone_number) profileUpdates.phone = bd.phone_number
@@ -127,7 +172,6 @@ export default function GeminiChat() {
         }
 
         if (bd.status === 'complete') {
-          // Check if already in history to avoid duplication
           const alreadyExists = userState.bookingHistory.some((b: BookingHistoryItem) => 
             b.from === bd.pickup && 
             b.to === bd.dropoff && 
