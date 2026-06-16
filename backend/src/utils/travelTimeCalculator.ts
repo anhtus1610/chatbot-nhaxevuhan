@@ -32,30 +32,19 @@ export const FALLBACK_OFFSETS: { [key: string]: number } = {
  * @param departureTime Giờ khởi hành (VD: '05:30', '19:20')
  * @returns số phút di chuyển đã được điều chỉnh
  */
-export function adjustTravelTime(
-  baseMinutes: number,
-  vehicleType: string,
-  departureTime: string
-): number {
-  let multiplier = 1.0;
-
-  // 1. Hệ số loại xe
-  if (vehicleType.toLowerCase() === 'limousine') {
-    multiplier *= 0.85; // Limousine đi nhanh hơn 15%
-  }
-
-  // 2. Hệ số khung giờ
+export function applyTimeBasedMultiplier(baseMinutes: number, departureTime: string): number {
   const [hoursStr, minutesStr] = departureTime.split(':');
   const hours = parseInt(hoursStr, 10);
   const minutes = parseInt(minutesStr, 10);
+  let multiplier = 1.0;
 
   if (!isNaN(hours) && !isNaN(minutes)) {
     const timeInMinutes = hours * 60 + minutes;
     
     // Cao điểm sáng: 07:00 - 09:00 (420 - 540)
-    // Cao điểm chiều: 16:30 - 18:30 (990 - 1110)
+    // Cao điểm chiều: 17:00 - 20:00 (1020 - 1200)
     const isMorningPeak = timeInMinutes >= 420 && timeInMinutes <= 540;
-    const isEveningPeak = timeInMinutes >= 990 && timeInMinutes <= 1110;
+    const isEveningPeak = timeInMinutes >= 1020 && timeInMinutes <= 1200;
     
     // Giờ đêm: 22:00 - 04:00 (>= 1320 hoặc <= 240)
     const isNight = timeInMinutes >= 1320 || timeInMinutes <= 240;
@@ -68,6 +57,24 @@ export function adjustTravelTime(
   }
 
   return Math.round(baseMinutes * multiplier);
+}
+
+export function adjustTravelTime(
+  baseMinutes: number,
+  vehicleType: string,
+  departureTime: string
+): number {
+  let multiplier = 1.0;
+
+  // 1. Hệ số loại xe
+  if (vehicleType.toLowerCase() === 'limousine') {
+    multiplier *= 0.85; // Limousine đi nhanh hơn 15%
+  }
+
+  const vehicleAdjusted = baseMinutes * multiplier;
+  
+  // 2. Hệ số khung giờ
+  return applyTimeBasedMultiplier(vehicleAdjusted, departureTime);
 }
 
 /**

@@ -174,9 +174,12 @@ export async function getDepartureTimes(
       : busTravelFromReverse;
 
     if (travelFromReverse !== null) {
-      // Dùng travel time từ chiều ngược
-      dep.eta_destination = calcETA(dep.time, travelFromReverse);
-      dep.note = dep.note || `Ước tính dựa trên hành trình chiều ngược (~${Math.round(travelFromReverse / 60)} tiếng)`;
+      // Dùng travel time từ chiều ngược, NHƯNG phải tính thêm khung giờ (cao điểm/đêm)
+      const { applyTimeBasedMultiplier } = require('../utils/travelTimeCalculator');
+      const timeAdjusted = applyTimeBasedMultiplier(travelFromReverse, dep.time);
+      
+      dep.eta_destination = calcETA(dep.time, timeAdjusted);
+      dep.note = dep.note || `Ước tính dựa trên hành trình chiều ngược (~${Math.round(timeAdjusted / 60)} tiếng)`;
       console.log(`[getDepartureTimes] Inferred ETA for ${dep.time} (${dep.vehicle_label}): ${dep.eta_destination} from reverse route`);
     } else {
       // Fallback cuối cùng: dùng travelTimeCalculator
