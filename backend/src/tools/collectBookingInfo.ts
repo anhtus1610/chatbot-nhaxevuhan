@@ -138,40 +138,40 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
   const missingFields: string[] = [];
   const validationMessages: string[] = []; // Dành cho AI đọc để thông báo lại khách
 
-  if (!customer_name) missingFields.push('customer_name');
+  const tripMissingFields: string[] = [];
+  const personalMissingFields: string[] = [];
 
-  // Validate email (bắt buộc)
+  // 1. Kiểm tra các thông tin cá nhân
+  if (!customer_name) personalMissingFields.push('customer_name');
+
   if (!email || String(email).trim() === '') {
-    missingFields.push('email');
-    validationMessages.push('Thiếu email. Bắt buộc: AI yêu cầu khách cung cấp địa chỉ email để nhận xác nhận đặt vé.');
+    personalMissingFields.push('email');
   } else {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(String(email).trim())) {
-      missingFields.push('email');
+      personalMissingFields.push('email');
       validationMessages.push('Email không đúng định dạng. Bắt buộc: AI thông báo lỗi và yêu cầu khách nhập lại email hợp lệ (ví dụ: abc@gmail.com).');
     }
   }
 
   if (phone_number === undefined || phone_number === null || String(phone_number).trim() === '') {
-    missingFields.push('phone_number');
+    personalMissingFields.push('phone_number');
   } else {
-    // Validate Vietnam phone number safely
     const phoneStr = String(phone_number);
     const phoneRegex = /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/;
     if (!phoneRegex.test(phoneStr.replace(/[\s\-\.]/g, ''))) {
-      missingFields.push('phone_number');
+      personalMissingFields.push('phone_number');
       validationMessages.push('Số điện thoại không đúng định dạng Việt Nam. Bắt buộc: AI thông báo cho khách lỗi này và yêu cầu khách nhập lại số điện thoại hợp lệ (10 số).');
     }
   }
 
+  // 2. Kiểm tra các thông tin chuyến đi
   if (departure_date === undefined || departure_date === null || String(departure_date).trim() === '') {
-    missingFields.push('departure_date');
+    tripMissingFields.push('departure_date');
   } else {
-    // Validate date is not in the past
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Auto convert DD-MM-YYYY or DD/MM/YYYY to YYYY-MM-DD
     let parsedDateStr = String(departure_date);
     const dateParts = parsedDateStr.split(/[-/]/);
     if (dateParts.length === 3 && dateParts[0].length <= 2) {
@@ -180,39 +180,59 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
     const dateObj = new Date(parsedDateStr);
 
     if (isNaN(dateObj.getTime())) {
-      missingFields.push('departure_date');
+      tripMissingFields.push('departure_date');
       validationMessages.push('Ngày đi không nhận dạng được. Bắt buộc: AI thông báo lỗi này và yêu cầu khách xác nhận lại ngày đi.');
     } else if (dateObj.getTime() < today.getTime()) {
-      missingFields.push('departure_date');
+      tripMissingFields.push('departure_date');
       validationMessages.push('Ngày đi không hợp lệ vì nằm trong quá khứ. Bắt buộc: AI thông báo cho khách lỗi này và yêu cầu khách chọn lại ngày đi (từ hôm nay trở đi).');
     }
   }
 
-  if (!departure_time) missingFields.push('departure_time');
-  if (!vehicle_type) missingFields.push('vehicle_type');
+  if (!departure_time) tripMissingFields.push('departure_time');
+  if (!vehicle_type) tripMissingFields.push('vehicle_type');
 
+  let hasTicketCount = false;
   if (ticket_count === undefined || ticket_count === null || ticket_count === '') {
-    missingFields.push('ticket_count');
+    tripMissingFields.push('ticket_count');
   } else {
     const count = Number(ticket_count);
     if (isNaN(count) || count <= 0) {
-      missingFields.push('ticket_count');
+      tripMissingFields.push('ticket_count');
       validationMessages.push('Số lượng vé không hợp lệ. Bắt buộc: AI thông báo lỗi này và yêu cầu khách nhập lại số lượng lớn hơn 0.');
-    } else if (vehicle_type) {
-      if (vehicle_type === 'vip' && count > 9) {
-        missingFields.push('ticket_count');
-        validationMessages.push(`Số lượng ${count} vé vượt quá sức chứa của 1 xe VIP (tối đa 9 chỗ). Bắt buộc: AI thông báo cho khách và gợi ý tách ra nhiều xe hoặc đổi loại xe.`);
-      } else if (vehicle_type === 'ghe' && count > 29) {
-        missingFields.push('ticket_count');
-        validationMessages.push(`Số lượng ${count} vé vượt quá sức chứa của 1 xe ghế ngồi (tối đa 29 chỗ). Bắt buộc: AI thông báo cho khách và gợi ý tách ra nhiều xe hoặc đổi loại xe.`);
-      } else if (vehicle_type === 'giuong' && count > 40) {
-        missingFields.push('ticket_count');
-        validationMessages.push(`Số lượng ${count} vé vượt quá sức chứa của 1 xe giường nằm (tối đa 40 chỗ). Bắt buộc: AI thông báo cho khách và gợi ý tách ra nhiều xe.`);
+    } else {
+      hasTicketCount = true;
+      if (vehicle_type) {
+        if (vehicle_type === 'vip' && count > 9) {
+          tripMissingFields.push('ticket_count');
+          validationMessages.push(`Số lượng ${count} vé vượt quá sức chứa của 1 xe VIP (tối đa 9 chỗ). Bắt buộc: AI thông báo cho khách và gợi ý tách ra nhiều xe hoặc đổi loại xe.`);
+          hasTicketCount = false;
+        } else if (vehicle_type === 'ghe' && count > 29) {
+          tripMissingFields.push('ticket_count');
+          validationMessages.push(`Số lượng ${count} vé vượt quá sức chứa của 1 xe ghế ngồi (tối đa 29 chỗ). Bắt buộc: AI thông báo cho khách và gợi ý tách ra nhiều xe hoặc đổi loại xe.`);
+          hasTicketCount = false;
+        } else if (vehicle_type === 'giuong' && count > 40) {
+          tripMissingFields.push('ticket_count');
+          validationMessages.push(`Số lượng ${count} vé vượt quá sức chứa của 1 xe giường nằm (tối đa 40 chỗ). Bắt buộc: AI thông báo cho khách và gợi ý tách ra nhiều xe.`);
+          hasTicketCount = false;
+        }
+      } else if (count > 40) {
+        tripMissingFields.push('ticket_count');
+        validationMessages.push(`Số lượng ${count} vé vượt quá sức chứa của 1 xe bất kỳ (tối đa 40 chỗ). Bắt buộc: AI thông báo cho khách và gợi ý tách ra nhiều xe.`);
+        hasTicketCount = false;
       }
-    } else if (count > 40) {
-      // Chưa chọn loại xe nhưng đặt > 40 vé thì chắc chắn quá 1 xe
-      missingFields.push('ticket_count');
-      validationMessages.push(`Số lượng ${count} vé vượt quá sức chứa của 1 xe bất kỳ (tối đa 40 chỗ). Bắt buộc: AI thông báo cho khách và gợi ý tách ra nhiều xe.`);
+    }
+  }
+
+  // QUY TẮC: Chỉ yêu cầu thông tin cá nhân (Tên, SĐT, Email) khi đã có số lượng vé hợp lệ
+  if (!hasTicketCount) {
+    missingFields.push(...tripMissingFields);
+    validationMessages.push('Vui lòng hỏi khách thông tin chuyến đi (số lượng vé, loại xe, giờ đi...). TUYỆT ĐỐI CHƯA hỏi tên, sđt, email ở bước này vì khách chưa chốt số lượng vé.');
+  } else {
+    // Đã có ticket_count, yêu cầu cả các thông tin chuyến đi còn lại và thông tin cá nhân
+    missingFields.push(...tripMissingFields);
+    missingFields.push(...personalMissingFields);
+    if (personalMissingFields.length > 0 && personalMissingFields.includes('email') && !validationMessages.some(m => m.includes('Email không đúng định dạng'))) {
+        validationMessages.push('Thiếu thông tin khách hàng. Bắt buộc: AI yêu cầu khách cung cấp thông tin (Tên, SĐT, Email) để hoàn tất đặt vé.');
     }
   }
 
@@ -284,7 +304,9 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
 
 Anh/chị chuyển khoản để giữ chỗ nhé ạ.
 Tìm Zalo OA "Xe khách Vũ Hán" (tích vàng) để xem thông tin thanh toán ạ.
-Lái phụ xe sẽ liên hệ trước 1-2 tiếng hẹn điểm đón ạ. 🙏`;
+Lái phụ xe sẽ liên hệ trước 1-2 tiếng hẹn điểm đón ạ. 🙏
+
+👉 *Anh/chị có muốn tham khảo hoặc đặt thêm vé chiều về (từ ${dropoff} về ${pickup}) không ạ? Nếu có, anh/chị nhắn em nhé!*`;
 
     // Save to PostgreSQL Database
     await saveBooking(result);

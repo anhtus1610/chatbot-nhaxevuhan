@@ -91,20 +91,41 @@ export async function getDepartureTimes(
 
   console.log(`[getDepartureTimes] Looking for: ${normalizedFrom.canonical} → ${normalizedTo.canonical}`);
 
+  const expandLocations = (loc: string): string[] => {
+    const locLower = loc.toLowerCase();
+    const provinceMap: Record<string, string[]> = {
+      'hà giang': ['hà giang', 'tp hà giang', 'đồng văn', 'mèo vạc', 'xín mần', 'hoàng su phì', 'quản bạ', 'yên minh', 'mậu duệ', 'bắc mê', 'vị xuyên', 'bắc quang', 'tân quang'],
+      'tuyên quang': ['tuyên quang', 'tp tuyên quang', 'na hang', 'chiêm hoá', 'hàm yên', 'sơn phú', 'đà vị', 'kiến thiết', 'mỹ bằng', 'xuân vân', 'trung trực'],
+      'cao bằng': ['cao bằng', 'tp cao bằng', 'bảo lâm', 'lý bôn', 'thượng nông', 'thượng giáp', 'đường âm', 'đường hồng', 'yên hoa'],
+      'lào cai': ['lào cai', 'tp lào cai', 'bắc hà', 'bảo nhai', 'lu', 'phố lu', 'bảo hà'],
+    };
+    
+    // Chỉ expand nếu loc trùng khớp chính xác tên tỉnh (hoặc "tp <tỉnh>")
+    for (const [prov, areas] of Object.entries(provinceMap)) {
+      if (locLower === prov || locLower === `tp ${prov}`) {
+        return areas;
+      }
+    }
+    return [loc];
+  };
+
+  const fromLocations = expandLocations(normalizedFrom.canonical);
+  const toLocations = expandLocations(normalizedTo.canonical);
+
+  const isProvinceSearch = fromLocations.length > 1 || toLocations.length > 1;
+
   // 1. Tìm lịch từ KnowledgeService (parsed từ schedules.md)
-  let scheduleEntries = knowledgeService.findSchedules(
-    normalizedFrom.canonical,
-    normalizedTo.canonical
-  );
+  let scheduleEntries: ScheduleEntry[] = [];
+  let reverseEntries: ScheduleEntry[] = [];
 
-  console.log(`[getDepartureTimes] Found ${scheduleEntries.length} schedule entries:`,
-    scheduleEntries.map(s => `${s.time} (${s.vehicle}) eta=${s.eta || 'N/A'}`));
+  for (const fLoc of fromLocations) {
+    for (const tLoc of toLocations) {
+      scheduleEntries.push(...knowledgeService.findSchedules(fLoc, tLoc));
+      reverseEntries.push(...knowledgeService.findReverseSchedules(fLoc, tLoc));
+    }
+  }
 
-  // 2. Tìm chuyến chiều NGƯỢC để tính travel time cho các chuyến chưa có ETA
-  const reverseEntries = knowledgeService.findReverseSchedules(
-    normalizedFrom.canonical,
-    normalizedTo.canonical
-  );
+  console.log(`[getDepartureTimes] Found ${scheduleEntries.length} schedule entries after expansion`);
 
   // Tính travel time từ chiều ngược (theo loại xe)
   const vipTravelFromReverse = getTravelTimeFromReverseRoute(reverseEntries, 'limousine');
@@ -113,13 +134,17 @@ export async function getDepartureTimes(
   console.log(`[getDepartureTimes] Travel time inferred from reverse: VIP=${vipTravelFromReverse ?? 'N/A'}min, Bus=${busTravelFromReverse ?? 'N/A'}min`);
 
   // Chuyển đổi ScheduleEntry → DepartureInfo
-  let departures: DepartureInfo[] = scheduleEntries.map(s => ({
-    time: s.time,
-    vehicle_type: s.vehicle.toLowerCase().includes('vip') ? 'limousine' : 'bus',
-    vehicle_label: s.vehicle || 'Xe giường',
-    eta_destination: s.eta || '',
-    note: s.note || '',
-  }));
+  let departures: DepartureInfo[] = scheduleEntries.map(s => {
+    // Nếu tìm kiếm theo mảng (chọn tỉnh), thêm điểm đến vào label để phân biệt
+    const routeSuffix = isProvinceSearch ? ` (đi ${s.to})` : '';
+    return {
+      time: s.time,
+      vehicle_type: s.vehicle.toLowerCase().includes('vip') ? 'limousine' : 'bus',
+      vehicle_label: (s.vehicle || 'Xe giường') + routeSuffix,
+      eta_destination: s.eta || '',
+      note: s.note || '',
+    };
+  });
 
   // Lọc theo loại xe nếu có
   if (vehicle && vehicle !== 'all') {
@@ -129,7 +154,8 @@ export async function getDepartureTimes(
   // Loại bỏ trùng lặp giờ
   const seen = new Set<string>();
   departures = departures.filter(d => {
-    const key = d.time + '|' + d.vehicle_type;
+    // Dùng vehicle_label thay vì vehicle_type để giữ lại các chuyến cùng giờ nhưng khác đích đến
+    const key = d.time + '|' + d.vehicle_label;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -153,19 +179,60 @@ export async function getDepartureTimes(
       dep.note = dep.note || `Ước tính dựa trên hành trình chiều ngược (~${Math.round(travelFromReverse / 60)} tiếng)`;
       console.log(`[getDepartureTimes] Inferred ETA for ${dep.time} (${dep.vehicle_label}): ${dep.eta_destination} from reverse route`);
     } else {
-      // Fallback cuối cùng: hardcode theo loại xe
-      const fallbackMinutes = dep.vehicle_type === 'limousine' ? 120 : 180;
-      dep.eta_destination = calcETA(dep.time, fallbackMinutes);
-      dep.note = dep.note || `Ước tính ~${Math.round(fallbackMinutes / 60)} tiếng`;
+      // Fallback cuối cùng: dùng travelTimeCalculator
+      const { getBaseMinutesForDestination, adjustTravelTime } = require('../utils/travelTimeCalculator');
+      const baseMinutes = getBaseMinutesForDestination(normalizedTo.canonical);
+      const adjustedMinutes = adjustTravelTime(baseMinutes, dep.vehicle_type, dep.time);
+      
+      dep.eta_destination = calcETA(dep.time, adjustedMinutes);
+      dep.note = dep.note || `Ước tính ~${Math.round(adjustedMinutes / 60)} tiếng`;
     }
   }
+
+  // Helper to find the first occurrence of a place name or its aliases in a string
+  const getFirstOccurrence = (place: string, text: string): number => {
+    const normalizedPlace = place.toLowerCase().trim();
+    const aliases: Record<string, string[]> = {
+      'xín mần': ['cốc pài', 'pà vầy sủ'],
+      'bảo lâm': ['pắc mầu'],
+      'hà nội': ['mỹ đình', 'hn', 'mỹđình'],
+      'đồng văn': ['đv'],
+      'mèo vạc': ['mv'],
+      'tuyên quang': ['tq'],
+      'hà giang': ['hg'],
+      'hoàng su phì': ['vinh quang', 'su phì'],
+      'quản bạ': ['tam sơn', 'quyết tiến'],
+      'chiêm hoá': ['vĩnh lộc'],
+    };
+
+    let terms = [normalizedPlace];
+    for (const [key, values] of Object.entries(aliases)) {
+      if (
+        normalizedPlace.includes(key) || 
+        key.includes(normalizedPlace) || 
+        values.some(v => normalizedPlace.includes(v) || v.includes(normalizedPlace))
+      ) {
+        terms.push(key, ...values);
+      }
+    }
+
+    terms = Array.from(new Set(terms)).filter(t => t.length > 1);
+
+    let minIdx = -1;
+    for (const term of terms) {
+      const idx = text.indexOf(term);
+      if (idx !== -1 && (minIdx === -1 || idx < minIdx)) {
+        minIdx = idx;
+      }
+    }
+    return minIdx;
+  };
 
   // 4. Tìm Q&A từ Markdown cho câu hỏi lịch chạy
   const queries = [
     `${from} ${to} mấy giờ`,
-    `${to} ${from} mấy giờ`,
     `${from} đi ${to}`,
-    `${to} về ${from}`,
+    `${from} đến ${to}`,
     `${from} ${to} chuyến`,
     `${from} ${to}`,
   ];
@@ -186,6 +253,14 @@ export async function getDepartureTimes(
       
       if (fromLower && fromLower !== 'hà nội' && !qLower.includes(fromLower)) return false;
       if (toLower && toLower !== 'hà nội' && !qLower.includes(toLower)) return false;
+
+      // Kiểm tra chiều di chuyển (hướng đi): từ điểm đi đến điểm đến
+      const idxFrom = getFirstOccurrence(from, qLower);
+      const idxTo = getFirstOccurrence(to, qLower);
+      if (idxFrom !== -1 && idxTo !== -1 && idxFrom > idxTo) {
+        // Điểm đi đứng sau điểm đến => Ngược chiều
+        return false;
+      }
       
       return isTimeQuery;
     });

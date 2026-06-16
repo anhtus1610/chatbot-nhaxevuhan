@@ -13,9 +13,27 @@ import { collectBookingInfo } from './collectBookingInfo';
 import { handoffToCSKH } from './handoffToCSKH';
 import { checkShippingInfo } from './checkShippingInfo';
 import { answerFAQ, checkSpecialSituation } from './answerFAQ';
+import { checkBookingHistory } from './checkBookingHistory';
 
 // Định nghĩa các tools cho OpenAI Function Calling
 export const tools: ChatCompletionTool[] = [
+  {
+    type: 'function',
+    function: {
+      name: 'check_booking_history',
+      description: 'Kiểm tra lịch sử đặt vé của khách hàng qua số điện thoại để gợi ý các chuyến đi cũ. Sử dụng khi khách cung cấp số điện thoại và muốn xem lịch sử hoặc muốn đặt lại vé như lần trước.',
+      parameters: {
+        type: 'object',
+        properties: {
+          phone_number: {
+            type: 'string',
+            description: 'Số điện thoại của khách hàng cần tra cứu (VD: 0375173917)'
+          }
+        },
+        required: ['phone_number']
+      }
+    }
+  },
   {
     type: 'function',
     function: {
@@ -241,6 +259,8 @@ export async function executeTool(
   operatorId: string
 ): Promise<any> {
   switch (toolName) {
+    case 'check_booking_history':
+      return await checkBookingHistory(args.phone_number);
     case 'check_route_and_price':
       return await checkRouteAndPrice(operatorId, args.pickup, args.dropoff, args.vehicle);
     case 'get_departure_times':
@@ -266,3 +286,4 @@ export async function executeTool(
       return { error: 'Unknown tool: ' + toolName };
   }
 }
+
