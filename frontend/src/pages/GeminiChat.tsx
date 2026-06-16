@@ -38,7 +38,6 @@ export default function GeminiChat() {
   const [showSimPanel, setShowSimPanel] = useState(false)
   const [simName, setSimName] = useState(userState.name)
   const [simPhone, setSimPhone] = useState(userState.phone)
-  const [simEmail, setSimEmail] = useState(userState.email)
   const [newFrom, setNewFrom] = useState('')
   const [newTo, setNewTo] = useState('')
 
@@ -46,8 +45,7 @@ export default function GeminiChat() {
   useEffect(() => {
     setSimName(userState.name)
     setSimPhone(userState.phone)
-    setSimEmail(userState.email)
-  }, [userState.name, userState.phone, userState.email])
+  }, [userState.name, userState.phone])
 
   useEffect(() => {
     if (!sessionId) {
@@ -106,7 +104,6 @@ export default function GeminiChat() {
         user_profile: {
           name: userState.name,
           phone: userState.phone,
-          email: userState.email,
           bookingHistory: userState.bookingHistory
         }
       })
@@ -177,8 +174,7 @@ export default function GeminiChat() {
   const handleSaveSimProfile = () => {
     userState.setUserProfile({ 
       name: simName,
-      phone: simPhone,
-      email: simEmail
+      phone: simPhone
     })
   }
 
@@ -395,15 +391,6 @@ export default function GeminiChat() {
                 />
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', color: '#aaa', marginBottom: '4px' }}>Email / Địa chỉ</label>
-                <input 
-                  type="text" 
-                  value={simEmail} 
-                  onChange={(e) => setSimEmail(e.target.value)}
-                  style={{ width: '100%', background: '#2c2c2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', padding: '8px', color: '#fff', fontSize: '0.9rem' }}
-                />
-              </div>
 
               <button 
                 onClick={handleSaveSimProfile}

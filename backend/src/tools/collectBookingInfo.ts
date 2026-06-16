@@ -24,7 +24,7 @@ export interface BookingInfo {
 }
 
 import prisma from '../utils/prisma';
-import { EmailService } from '../services/emailService';
+import { SmsService } from '../services/smsService';
 
 
 // Helper to save booking to PostgreSQL
@@ -144,16 +144,6 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
   // 1. Kiểm tra các thông tin cá nhân
   if (!customer_name) personalMissingFields.push('customer_name');
 
-  if (!email || String(email).trim() === '') {
-    personalMissingFields.push('email');
-  } else {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(String(email).trim())) {
-      personalMissingFields.push('email');
-      validationMessages.push('Email không đúng định dạng. Bắt buộc: AI thông báo lỗi và yêu cầu khách nhập lại email hợp lệ (ví dụ: abc@gmail.com).');
-    }
-  }
-
   if (phone_number === undefined || phone_number === null || String(phone_number).trim() === '') {
     personalMissingFields.push('phone_number');
   } else {
@@ -185,6 +175,18 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
     } else if (dateObj.getTime() < today.getTime()) {
       tripMissingFields.push('departure_date');
       validationMessages.push('Ngày đi không hợp lệ vì nằm trong quá khứ. Bắt buộc: AI thông báo cho khách lỗi này và yêu cầu khách chọn lại ngày đi (từ hôm nay trở đi).');
+    } else if (dateObj.getTime() === today.getTime() && departure_time) {
+      // Kiểm tra giờ đi đã qua chưa (cùng ngày hôm nay)
+      const now = new Date();
+      const [hours, minutes] = String(departure_time).split(':').map(Number);
+      if (!isNaN(hours) && !isNaN(minutes)) {
+        const departureMinutes = hours * 60 + minutes;
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        if (departureMinutes <= currentMinutes) {
+          tripMissingFields.push('departure_time');
+          validationMessages.push(`Giờ đi ${departure_time} đã qua rồi (hiện tại là ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}). Bắt buộc: AI thông báo cho khách rằng giờ này đã qua và gợi ý chọn chuyến muộn hơn trong ngày hoặc đặt vé ngày mai.`);
+        }
+      }
     }
   }
 
@@ -226,13 +228,13 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
   // QUY TẮC: Chỉ yêu cầu thông tin cá nhân (Tên, SĐT, Email) khi đã có số lượng vé hợp lệ
   if (!hasTicketCount) {
     missingFields.push(...tripMissingFields);
-    validationMessages.push('Vui lòng hỏi khách thông tin chuyến đi (số lượng vé, loại xe, giờ đi...). TUYỆT ĐỐI CHƯA hỏi tên, sđt, email ở bước này vì khách chưa chốt số lượng vé.');
+    validationMessages.push('Vui lòng hỏi khách thông tin chuyến đi (số lượng vé, loại xe, giờ đi...). TUYỆT ĐỐI CHƯA hỏi tên, sđt ở bước này vì khách chưa chốt số lượng vé.');
   } else {
     // Đã có ticket_count, yêu cầu cả các thông tin chuyến đi còn lại và thông tin cá nhân
     missingFields.push(...tripMissingFields);
     missingFields.push(...personalMissingFields);
-    if (personalMissingFields.length > 0 && personalMissingFields.includes('email') && !validationMessages.some(m => m.includes('Email không đúng định dạng'))) {
-        validationMessages.push('Thiếu thông tin khách hàng. Bắt buộc: AI yêu cầu khách cung cấp thông tin (Tên, SĐT, Email) để hoàn tất đặt vé.');
+    if (personalMissingFields.length > 0) {
+        validationMessages.push('Thiếu thông tin khách hàng. Bắt buộc: AI yêu cầu khách cung cấp thông tin (Tên, SĐT) để hoàn tất đặt vé.');
     }
   }
 
@@ -322,15 +324,12 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
   };
 
   if (status === 'complete') {
-    const emailNote = result.email
-      ? `\nEmail xác nhận đã được gửi đến: ${result.email}`
-      : '';
-
     result.confirmation_message = `Dạ em xác nhận đặt vé:
 • ${ticket_count || 1} vé ${getVehicleLabel(vehicle_type)} ${pickup} → ${dropoff}
 • Ngày: ${departure_date} - Chuyến: ${departure_time}
 • Tên: ${customer_name}
-• SĐT: ${phone_number}${emailNote}
+• SĐT: ${phone_number}
+SMS xác nhận đã được gửi đến SĐT ${phone_number}.
 
 Anh/chị chuyển khoản để giữ chỗ nhé ạ.
 Tìm Zalo OA "Xe khách Vũ Hán" (tích vàng) để xem thông tin thanh toán ạ.
@@ -341,11 +340,11 @@ Lái phụ xe sẽ liên hệ trước 1-2 tiếng hẹn điểm đón ạ. 🙏
     // Save to PostgreSQL Database
     await saveBooking(result);
 
-    // Gửi email xác nhận nếu có email
-    if (result.email) {
-      const emailSent = await EmailService.sendBookingConfirmation(result);
-      if (emailSent) {
-        console.log(`[collectBookingInfo] Email xác nhận đã gửi đến: ${result.email}`);
+    // Gửi SMS xác nhận qua SĐT
+    if (result.phone_number) {
+      const smsSent = await SmsService.sendBookingConfirmation(result);
+      if (smsSent) {
+        console.log(`[collectBookingInfo] SMS xác nhận đã gửi đến: ${result.phone_number}`);
       }
     }
   }
