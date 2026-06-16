@@ -131,7 +131,14 @@ Tuyệt đối không tự ý hỏi các thông tin đặt vé khác cho đến 
 
           console.log(`🔧 Calling tool: ${functionName}`, functionArgs);
 
-          const result = await executeTool(functionName, functionArgs, this.operatorId);
+          let result;
+          const validation = this.validatePickupLocation(functionName, functionArgs);
+          if (!validation.valid) {
+            result = validation.errorResult;
+            console.log(`⚠️ Blocked defaulted pickup location for tool ${functionName}:`, result);
+          } else {
+            result = await executeTool(functionName, functionArgs, this.operatorId);
+          }
 
           toolCalls.push({
             toolName: functionName,
@@ -283,7 +290,14 @@ Tuyệt đối không tự ý hỏi các thông tin đặt vé khác cho đến 
 
             console.log(`🔧 Calling tool in stream: ${functionName}`, functionArgs);
 
-            const result = await executeTool(functionName, functionArgs, this.operatorId);
+            let result;
+            const validation = this.validatePickupLocation(functionName, functionArgs);
+            if (!validation.valid) {
+              result = validation.errorResult;
+              console.log(`⚠️ Blocked defaulted pickup location in stream for tool ${functionName}:`, result);
+            } else {
+              result = await executeTool(functionName, functionArgs, this.operatorId);
+            }
 
             toolCallsResults.push({ toolName: functionName, result });
 
@@ -386,6 +400,75 @@ Tuyệt đối không tự ý hỏi các thông tin đặt vé khác cho đến 
 
   getConversationHistory(): ChatCompletionMessageParam[] {
     return this.conversationHistory;
+  }
+
+  private validatePickupLocation(functionName: string, functionArgs: any): { valid: boolean, errorResult?: any } {
+    if (!['check_route_and_price', 'get_departure_times', 'collect_booking_info'].includes(functionName)) {
+      return { valid: true };
+    }
+
+    const pickupArgs = ['pickup', 'from', 'pickup_location'];
+    let pickupVal = '';
+    for (const arg of pickupArgs) {
+      if (functionArgs[arg]) {
+        pickupVal = functionArgs[arg];
+        break;
+      }
+    }
+    
+    if (!pickupVal) return { valid: true };
+    
+    const locLower = pickupVal.toLowerCase().trim();
+    
+    // Check if mentioned in user messages
+    const userMessages = this.conversationHistory
+      .filter(m => m.role === 'user')
+      .map(m => {
+        const content = m.content;
+        if (typeof content === 'string') {
+          return content.toLowerCase();
+        } else if (Array.isArray(content)) {
+          return content.map(part => ('text' in part ? part.text : '')).join(' ').toLowerCase();
+        }
+        return '';
+      });
+      
+    const keywordsMap: Record<string, string[]> = {
+      'hà nội': ['hà nội', 'ha noi', 'mỹ đình', 'my dinh', 'nội bài', 'noi bai', 'giáp bát', 'giap bat', 'nước ngầm', 'nuoc ngam', 'kim anh', 'bầu', 'nam hồng'],
+      'tuyên quang': ['tuyên quang', 'tq', 'sơn dương', 'na hang', 'chiêm hóa', 'hàm yên'],
+      'hà giang': ['hà giang', 'hg', 'xín mần', 'đồng văn', 'mèo vạc', 'hoàng su phì', 'yên minh', 'quản bạ', 'cốc pài'],
+      'lào cai': ['lào cai', 'lc', 'sapa', 'bắc hà', 'phố lu', 'bảo hà'],
+    };
+    
+    let matchKeywords: string[] = [locLower];
+    for (const [key, val] of Object.entries(keywordsMap)) {
+      if (locLower.includes(key) || key.includes(locLower)) {
+        matchKeywords.push(...val);
+      }
+    }
+    
+    const mentioned = userMessages.some(content => matchKeywords.some(keyword => content.includes(keyword)));
+    if (mentioned) return { valid: true };
+    
+    // Check if in booking history of userProfile
+    if (this.userProfile?.bookingHistory) {
+      for (const b of this.userProfile.bookingHistory) {
+        const from = (b.from || b.pickup || '').toLowerCase();
+        const to = (b.to || b.dropoff || '').toLowerCase();
+        if (from.includes(locLower) || locLower.includes(from) || to.includes(locLower) || locLower.includes(to)) {
+          return { valid: true };
+        }
+      }
+    }
+    
+    // If not mentioned and not in history, it was defaulted by the AI
+    return {
+      valid: false,
+      errorResult: {
+        error: "missing_pickup_location",
+        message: `Khách hàng chưa cung cấp điểm xuất phát (điểm đi) cụ thể. Bạn không được tự ý mặc định điểm đi là ${pickupVal}. Hãy hỏi lại khách hàng xem họ muốn đi từ đâu.`
+      }
+    };
   }
 }
 
