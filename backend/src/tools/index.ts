@@ -44,11 +44,11 @@ export const tools: ChatCompletionTool[] = [
         properties: {
           pickup: {
             type: 'string',
-            description: 'Điểm đón khách muốn lên xe (VD: Hà Nội, Mỹ Đình, Bắc Giang)'
+            description: 'Điểm đón khách muốn lên xe (VD: Hà Nội, Mỹ Đình, Bắc Giang). BẮT BUỘC lấy từ lịch sử trò chuyện lượt trước nếu người dùng không nhắc lại. TUYỆT ĐỐI KHÔNG tự ý điền Hà Nội hoặc giá trị mặc định nào khác nếu khách hàng chưa cung cấp điểm xuất phát/đón.'
           },
           dropoff: {
             type: 'string',
-            description: 'Điểm trả khách muốn xuống (VD: Xín Mần, Đồng Văn, Mèo Vạc)'
+            description: 'Điểm trả khách muốn xuống (VD: Xín Mần, Đồng Văn, Mèo Vạc). BẮT BUỘC lấy từ lịch sử trò chuyện lượt trước nếu người dùng không nhắc lại và chỉ thay đổi điểm đón.'
           },
           vehicle: {
             type: 'string',
@@ -70,11 +70,11 @@ export const tools: ChatCompletionTool[] = [
         properties: {
           from: {
             type: 'string',
-            description: 'Điểm xuất phát (VD: Hà Nội, Mỹ Đình)'
+            description: 'Điểm xuất phát (VD: Hà Nội, Mỹ Đình). BẮT BUỘC lấy từ lịch sử trò chuyện lượt trước nếu người dùng không nhắc lại. TUYỆT ĐỐI KHÔNG tự ý điền Hà Nội hoặc giá trị mặc định nào khác nếu khách hàng chưa cung cấp điểm xuất phát/đi.'
           },
           to: {
             type: 'string',
-            description: 'Điểm đến (VD: Xín Mần, Tuyên Quang)'
+            description: 'Điểm đến (VD: Xín Mần, Tuyên Quang). BẮT BUỘC lấy từ lịch sử trò chuyện lượt trước nếu người dùng không nhắc lại và chỉ thay đổi điểm xuất phát (ví dụ: lượt trước đi Xín Mần, lượt này nói "tôi đi từ Tuyên Quang" thì điểm đến vẫn phải giữ nguyên là Xín Mần, TUYỆT ĐỐI không mặc định/tự đổi thành Hà Nội).'
           },
           vehicle: {
             type: 'string',
@@ -175,11 +175,11 @@ export const tools: ChatCompletionTool[] = [
           },
           pickup: {
             type: 'string',
-            description: 'Điểm đón'
+            description: 'Điểm đón. BẮT BUỘC lấy từ lịch sử trò chuyện lượt trước nếu người dùng không nhắc lại và chỉ thay đổi điểm trả.'
           },
           dropoff: {
             type: 'string',
-            description: 'Điểm trả'
+            description: 'Điểm trả. BẮT BUỘC lấy từ lịch sử trò chuyện lượt trước nếu người dùng không nhắc lại và chỉ thay đổi điểm đón.'
           },
           departure_date: {
             type: 'string',
