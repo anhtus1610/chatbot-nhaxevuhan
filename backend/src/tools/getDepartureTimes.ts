@@ -265,6 +265,17 @@ export async function getDepartureTimes(
         return false;
       }
       
+      // Ngăn chặn "Hà Nội đi Phú Thọ" match trúng "Tuyên Quang đi Phú Thọ"
+      // Nếu query gốc có Hà Nội, nhưng câu hỏi Q&A KHÔNG chứa Hà Nội (vì đã bị skip ở trên),
+      // thì phải kiểm tra xem câu hỏi Q&A có chứa điểm xuất phát chính nào khác không. Nếu có -> Loại.
+      const otherOrigins = ['tuyên quang', 'bắc giang', 'bắc ninh', 'đoan hùng', 'hà giang', 'chiêm hoá', 'mèo vạc', 'xín mần', 'hoàng su phì'];
+      if (fromLower === 'hà nội' && idxFrom === -1) {
+         if (otherOrigins.some(o => qLower.includes(o))) return false;
+      }
+      if (toLower === 'hà nội' && idxTo === -1) {
+         if (otherOrigins.some(o => qLower.includes(o))) return false;
+      }
+
       return isTimeQuery;
     });
 

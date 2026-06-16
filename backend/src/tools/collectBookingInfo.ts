@@ -244,6 +244,7 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
     const allDeparturesInfo = await getDepartureTimes(operatorId, pickup, dropoff, 'all', departure_date);
     const deps = allDeparturesInfo.departures;
     
+    let availableTimes: string[] = [];
     if (deps.length > 0) {
       // 1. Filter by vehicle_type
       let validDeps = deps;
@@ -263,14 +264,43 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
         }
       }
       
-      // 2. Filter by departure_time (chỉ kiểm tra khi vehicle_type hợp lệ hoặc không có vehicle_type)
-      if (validDeps.length > 0 && departure_time) {
-         const availableTimes = validDeps.map(d => d.time);
-         if (!availableTimes.includes(departure_time)) {
-           status = 'invalid_time';
-           suggestedTimes = availableTimes;
-           if (!missingFields.includes('departure_time')) missingFields.push('departure_time');
-         }
+      if (validDeps.length > 0) {
+        availableTimes = validDeps.map(d => d.time);
+      }
+    } else if (allDeparturesInfo.qa_response) {
+      // Trích xuất các giờ xe chạy từ câu trả lời văn bản Q&A nếu không có danh sách departures chuẩn hóa
+      const text = allDeparturesInfo.qa_response;
+      const regex = /(\d{1,2})[h:](\d{2})/gi;
+      let match;
+      const timesSet = new Set<string>();
+      while ((match = regex.exec(text)) !== null) {
+        const hours = match[1].padStart(2, '0');
+        const minutes = match[2];
+        timesSet.add(`${hours}:${minutes}`);
+      }
+      
+      const textLower = text.toLowerCase();
+      const hourRegex = /(\d{1,2})\s*(?:giờ|h)/g;
+      while ((match = hourRegex.exec(textLower)) !== null) {
+        const hour = match[1].padStart(2, '0');
+        const index = match.index;
+        const sub = textLower.substring(index, index + 10);
+        if (!/\d{1,2}[h:]\d{2}/.test(sub)) {
+          timesSet.add(`${hour}:00`);
+        }
+      }
+      availableTimes = Array.from(timesSet);
+    }
+
+    // Kiểm tra tính hợp lệ của giờ đi
+    if (availableTimes.length > 0 && departure_time) {
+      if (!availableTimes.includes(departure_time)) {
+        status = 'invalid_time';
+        suggestedTimes = availableTimes;
+        if (!missingFields.includes('departure_time')) {
+          missingFields.push('departure_time');
+        }
+        validationMessages.push(`Giờ xe chạy ${departure_time} không khớp với lịch chạy của nhà xe. Các giờ hiện có: ${availableTimes.join(', ')}.`);
       }
     }
   }

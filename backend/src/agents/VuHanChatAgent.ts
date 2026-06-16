@@ -55,26 +55,45 @@ export class VuHanChatAgent {
   private conversationHistory: ChatCompletionMessageParam[] = [];
   private operatorId: string;
   private model: string;
+  private userProfile: any;
 
-  constructor(operatorId: string = 'vu_han') {
+  constructor(operatorId: string = 'vu_han', userProfile?: any) {
     this.operatorId = operatorId;
     this.model = process.env.OPENAI_MODEL || 'gpt-4o';
+    this.userProfile = userProfile;
     this.initializeConversation();
   }
 
   private initializeConversation(): void {
     const now = new Date();
-    const dateStr = now.toLocaleDateString('vi-VN', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    const dateStr = now.toLocaleDateString('vi-VN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
+
+    let promptAddition = '';
+    if (this.userProfile?.bookingHistory && this.userProfile.bookingHistory.length > 0) {
+      const history = this.userProfile.bookingHistory;
+      const lastBooking = history[history.length - 1];
+      const customerName = this.userProfile.name || 'khách';
+      const from = lastBooking.pickup || lastBooking.from;
+      const to = lastBooking.dropoff || lastBooking.to;
+      if (from && to) {
+        promptAddition = `\n\n**QUY TẮC ĐẶC BIỆT (ƯU TIÊN HÀNG ĐẦU)**:
+Khách hàng này tên là "${customerName}" (SĐT: ${this.userProfile.phone || 'chưa có'}).
+Khách hàng có lịch sử vừa đặt chuyến đi từ "${from}" đến "${to}".
+Ngay trong câu trả lời đầu tiên của cuộc trò chuyện (bất kể khách hàng nói gì như "alo", "tôi muốn đặt vé", v.v.), bạn BẮT BUỘC phải chủ động chào hỏi theo tên khách và gợi ý ngay chuyến xe khứ hồi ngược lại từ "${to}" về "${from}" cho khách hàng này.
+Ví dụ: "Dạ em vừa thấy anh/chị ${customerName} đặt chuyến đi ${from} -> ${to}, mình có muốn đặt vé từ ${to}->${from} không ạ?"
+Tuyệt đối không tự ý hỏi các thông tin đặt vé khác cho đến khi khách phản hồi về gợi ý khứ hồi này.`;
+      }
+    }
     
     this.conversationHistory = [
       {
         role: 'system',
-        content: `${systemPrompt}\n\n**THỜI GIAN HIỆN TẠI**: Hôm nay là ${dateStr}.`
+        content: `${systemPrompt}\n\n**THỜI GIAN HIỆN TẠI**: Hôm nay là ${dateStr}.${promptAddition}`
       }
     ];
   }
@@ -263,7 +282,7 @@ export class VuHanChatAgent {
             }
 
             console.log(`🔧 Calling tool in stream: ${functionName}`, functionArgs);
-            
+
             const result = await executeTool(functionName, functionArgs, this.operatorId);
 
             toolCallsResults.push({ toolName: functionName, result });
@@ -285,9 +304,9 @@ export class VuHanChatAgent {
           });
 
           const chatResponse = this.analyzeResponse(content, toolCallsResults);
-          
-          yield { 
-            type: 'done', 
+
+          yield {
+            type: 'done',
             content: content,
             data: {
               intent: chatResponse.intent,
@@ -295,7 +314,7 @@ export class VuHanChatAgent {
               needsEscalation: chatResponse.needsEscalation
             }
           };
-          
+
           continueLoop = false;
 
         } else {

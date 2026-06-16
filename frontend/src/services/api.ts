@@ -31,6 +31,18 @@ export interface ChatMessage {
 export interface ChatRequest {
   sessionId: string
   message: string
+  user_profile?: {
+    name?: string
+    phone?: string
+    email?: string
+    bookingHistory?: {
+      from: string
+      to: string
+      date?: string
+      time?: string
+      vehicleType?: string
+    }[]
+  }
 }
 
 export interface ChatResponse {
@@ -38,6 +50,17 @@ export interface ChatResponse {
   sessionId: string
   intent?: string
   extractedData?: Record<string, unknown>
+  booking_data?: {
+    customer_name?: string
+    phone_number?: string
+    email?: string
+    pickup: string
+    dropoff: string
+    departure_date?: string
+    departure_time?: string
+    vehicle_type?: string
+    status: string
+  }
   handoff?: boolean
 }
 
