@@ -26,7 +26,7 @@ export default function BookingManager() {
 
   useEffect(() => {
     fetchBookings()
-    
+
     // Auto refresh every 5 seconds
     const interval = setInterval(() => {
       // Fetch without setting loading state to avoid flickering
@@ -83,13 +83,13 @@ export default function BookingManager() {
           <h1>Quản lý đặt xe</h1>
           <span className="bm-count badge">{bookings.length} khách</span>
         </div>
-        
+
         <div className="bm-actions" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <div className="bm-search">
             <Search size={16} />
-            <input 
-              type="text" 
-              placeholder="Tìm tên, SĐT, điểm đi/đến..." 
+            <input
+              type="text"
+              placeholder="Tìm tên, SĐT, điểm đi/đến..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -169,8 +169,8 @@ export default function BookingManager() {
                     </td>
                     <td className="bm-col-status">
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <select 
-                          value={b.status} 
+                        <select
+                          value={b.status}
                           onChange={(e) => handleStatusChange(b.id, e.target.value)}
                           className="btn btn-primary"
                           style={{ padding: '6px 12px', fontSize: '13px', cursor: 'pointer', outline: 'none' }}
@@ -179,8 +179,8 @@ export default function BookingManager() {
                           <option value="complete" style={{ color: '#000' }}>Đã chốt</option>
                           <option value="cancelled" style={{ color: '#000' }}>Đã hủy</option>
                         </select>
-                        <button 
-                          className="btn icon-btn" 
+                        <button
+                          className="btn icon-btn"
                           onClick={() => handleDelete(b.id)}
                           title="Xóa vé"
                           style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '6px', borderRadius: '6px' }}
@@ -217,15 +217,15 @@ export default function BookingManager() {
               Bạn có chắc chắn muốn xóa đơn đặt vé này không? Hành động này không thể hoàn tác.
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button 
-                className="btn" 
+              <button
+                className="btn"
                 onClick={() => setDeleteConfirmId(null)}
                 style={{ backgroundColor: '#374151', color: '#f3f4f6' }}
               >
                 Hủy
               </button>
-              <button 
-                className="btn" 
+              <button
+                className="btn"
                 onClick={confirmDelete}
                 style={{ backgroundColor: '#ef4444', color: '#fff' }}
               >

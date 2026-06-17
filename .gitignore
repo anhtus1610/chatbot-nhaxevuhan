@@ -1,16 +1,13 @@
-<<<<<<< HEAD
+# Dependencies
+node_modules/
 
 # Playwright
-node_modules/
 /test-results/
+/test-results-sevl/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-.env
-=======
-# Dependencies
-node_modules/
 
 # Environment variables (chứa API keys, secrets)
 .env
@@ -46,4 +43,3 @@ prisma/migrations/
 
 # Misc
 .cache/
->>>>>>> 3234724ed931baacb83ffb3f93f6d07bced12761

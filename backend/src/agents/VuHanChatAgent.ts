@@ -418,46 +418,94 @@ Tuyệt đối không tự ý hỏi các thông tin đặt vé khác cho đến 
     
     if (!pickupVal) return { valid: true };
     
-    const locLower = pickupVal.toLowerCase().trim();
+    // Strip Vietnamese diacritics to ASCII for robust comparison regardless of encoding
+    const removeVietnamese = (s: string): string => {
+      return s
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // remove combining diacritical marks
+        .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+        .toLowerCase()
+        .trim();
+    };
+    const locAscii = removeVietnamese(pickupVal);
     
-    // Check if mentioned in user messages
+    // Check if mentioned in user messages (ASCII-stripped)
     const userMessages = this.conversationHistory
       .filter(m => m.role === 'user')
       .map(m => {
         const content = m.content;
         if (typeof content === 'string') {
-          return content.toLowerCase();
+          return removeVietnamese(content);
         } else if (Array.isArray(content)) {
-          return content.map(part => ('text' in part ? part.text : '')).join(' ').toLowerCase();
+          return content.map(part => ('text' in part ? removeVietnamese(part.text || '') : '')).join(' ');
         }
         return '';
       });
-      
+
+
+    // Extended keyword map covering all location variants & aliases
     const keywordsMap: Record<string, string[]> = {
-      'hà nội': ['hà nội', 'ha noi', 'mỹ đình', 'my dinh', 'nội bài', 'noi bai', 'giáp bát', 'giap bat', 'nước ngầm', 'nuoc ngam', 'kim anh', 'bầu', 'nam hồng'],
-      'tuyên quang': ['tuyên quang', 'tq', 'sơn dương', 'na hang', 'chiêm hóa', 'hàm yên'],
-      'hà giang': ['hà giang', 'hg', 'xín mần', 'đồng văn', 'mèo vạc', 'hoàng su phì', 'yên minh', 'quản bạ', 'cốc pài'],
-      'lào cai': ['lào cai', 'lc', 'sapa', 'bắc hà', 'phố lu', 'bảo hà'],
+      'hà nội': [
+        'hà nội', 'ha noi', 'hanoi', 'hn',
+        'mỹ đình', 'my dinh',
+        'nội bài', 'noi bai',
+        'giáp bát', 'giap bat',
+        'nước ngầm', 'nuoc ngam',
+        'kim anh', 'bầu', 'nam hồng',
+        'yên nghĩa', 'yen nghia',
+        'hà đông', 'ha dong',
+        'long biên', 'long bien',
+      ],
+      'tuyên quang': [
+        'tuyên quang', 'tuyen quang', 'tq',
+        'sơn dương', 'son duong', 'na hang',
+        'chiêm hóa', 'chiem hoa', 'hàm yên', 'ham yen',
+        'vĩnh lộc', 'vinh loc',
+      ],
+      'hà giang': [
+        'hà giang', 'ha giang', 'hg',
+        'xín mần', 'xin man', 'cốc pài', 'coc pai',
+        'đồng văn', 'dong van', 'đv', 'dv',
+        'mèo vạc', 'meo vac', 'mv',
+        'hoàng su phì', 'hoang su phi', 'hsp',
+        'yên minh', 'yen minh', 'quản bạ', 'quan ba',
+        'pà vầy sủ', 'pa vay su',
+        'tp hà giang', 'tp ha giang', 'thành phố hà giang',
+      ],
+      'lào cai': [
+        'lào cai', 'lao cai', 'lc',
+        'sapa', 'sa pa', 'bắc hà', 'bac ha',
+        'phố lu', 'pho lu', 'bảo hà', 'bao ha',
+      ],
+      'bắc giang': ['bac giang', 'bac giang', 'bg'],
     };
     
-    let matchKeywords: string[] = [locLower];
-    for (const [key, val] of Object.entries(keywordsMap)) {
-      if (locLower.includes(key) || key.includes(locLower)) {
-        matchKeywords.push(...val);
+    // Build candidate keyword set: start with ASCII-stripped pickup value itself
+    // All keywords are normalized via removeVietnamese so matching is encoding-independent
+    let matchKeywords: string[] = [locAscii];
+    for (const [, valArr] of Object.entries(keywordsMap)) {
+      const asciiVals = valArr.map(v => removeVietnamese(v));
+      // If any alias matches the pickup (ASCII-stripped), add ALL aliases for that group
+      if (asciiVals.some(v => locAscii.includes(v) || v.includes(locAscii) || locAscii === v)) {
+        matchKeywords.push(...asciiVals);
       }
     }
+    // Deduplicate
+    matchKeywords = [...new Set(matchKeywords)];
     
-    const mentioned = userMessages.some(content => matchKeywords.some(keyword => content.includes(keyword)));
+    // Check if ANY keyword is found in ANY user message (both stripped of Vietnamese)
+    const mentioned = userMessages.some(content =>
+      matchKeywords.some(keyword => keyword.length > 1 && content.includes(keyword))
+    );
     if (mentioned) return { valid: true };
     
     // Check if in booking history of userProfile
     if (this.userProfile?.bookingHistory) {
       for (const b of this.userProfile.bookingHistory) {
-        const from = (b.from || b.pickup || '').toLowerCase();
-        const to = (b.to || b.dropoff || '').toLowerCase();
-        if (from.includes(locLower) || locLower.includes(from) || to.includes(locLower) || locLower.includes(to)) {
-          return { valid: true };
-        }
+        const from = removeVietnamese(b.from || b.pickup || '');
+        const to = removeVietnamese(b.to || b.dropoff || '');
+        if (from && (from.includes(locAscii) || locAscii.includes(from))) return { valid: true };
+        if (to && (to.includes(locAscii) || locAscii.includes(to))) return { valid: true };
       }
     }
     
@@ -473,3 +521,5 @@ Tuyệt đối không tự ý hỏi các thông tin đặt vé khác cho đến 
 }
 
 export default VuHanChatAgent;
+
+

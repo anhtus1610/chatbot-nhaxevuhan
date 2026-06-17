@@ -26,6 +26,129 @@ export interface BookingInfo {
 import prisma from '../utils/prisma';
 import { SmsService } from '../services/smsService';
 
+function getSessionIndicator(text: string, matchIndex: number, matchLength: number): 'pm' | 'am_sáng' | 'am_trưa' | 'none' {
+  const textLower = text.toLowerCase();
+
+  // Look ahead up to 15 characters, but stop at comma or period
+  const after = textLower.substring(matchIndex + matchLength, matchIndex + matchLength + 15).split(/[.,]/)[0];
+
+  // Look behind up to 15 characters, but stop at comma or period
+  const beforeStart = Math.max(0, matchIndex - 15);
+  const beforeParts = textLower.substring(beforeStart, matchIndex).split(/[.,]/);
+  const before = beforeParts[beforeParts.length - 1]; // get the part closest to the match
+
+  const combined = before + ' ' + after;
+  if (combined.includes('tối') || combined.includes('đêm') || combined.includes('chiều')) {
+    return 'pm';
+  }
+  if (combined.includes('sáng')) {
+    return 'am_sáng';
+  }
+  if (combined.includes('trưa')) {
+    return 'am_trưa';
+  }
+  return 'none';
+}
+
+function extractTimesFromText(text: string): string[] {
+  const timesSet = new Set<string>();
+  const textLower = text.toLowerCase();
+  let match;
+
+  // 1. Trích xuất dạng chuẩn HH:MM hoặc HHhMM (VD: 19:30, 19h30, 07:30, 7h30)
+  const standardRegex = /(\d{1,2})\s*[h:]\s*(\d{2})/gi;
+  while ((match = standardRegex.exec(text)) !== null) {
+    let hour = parseInt(match[1], 10);
+    const minute = match[2];
+
+    // Kiểm tra buổi xung quanh để đổi sang 24h
+    if (hour <= 12) {
+      const session = getSessionIndicator(text, match.index, match[0].length);
+      if (session === 'pm') {
+        if (hour < 12) hour += 12;
+        else if (hour === 12) hour = 0; // 12h đêm
+      } else if (session === 'am_sáng' && hour === 12) {
+        hour = 0; // 12h sáng (nửa đêm)
+      }
+    }
+    timesSet.add(`${hour.toString().padStart(2, '0')}:${minute}`);
+  }
+
+  // 2. Trích xuất giờ rưỡi: X rưỡi, Xh rưỡi, X giờ rưỡi (VD: 7 rưỡi, 5 rưỡi sáng)
+  const ruoiRegex = /(\d{1,2})\s*(?:giờ|h)?\s*rưỡi/gi;
+  while ((match = ruoiRegex.exec(text)) !== null) {
+    let hour = parseInt(match[1], 10);
+    const minute = '30';
+
+    if (hour <= 12) {
+      const session = getSessionIndicator(text, match.index, match[0].length);
+      if (session === 'pm') {
+        if (hour < 12) hour += 12;
+        else if (hour === 12) hour = 0;
+      } else if (session === 'am_sáng' && hour === 12) {
+        hour = 0;
+      }
+    }
+    timesSet.add(`${hour.toString().padStart(2, '0')}:${minute}`);
+  }
+
+  // 3. Trích xuất giờ kém: Xh kém Y (VD: 6h kém 15)
+  const kemRegex = /(\d{1,2})\s*(?:giờ|h)\s*kém\s*(\d{1,2})/gi;
+  while ((match = kemRegex.exec(text)) !== null) {
+    let hour = parseInt(match[1], 10);
+    const kemMinutes = parseInt(match[2], 10);
+
+    let targetHour = hour - 1;
+    let targetMinute = 60 - kemMinutes;
+
+    if (targetHour < 0) targetHour = 23;
+
+    if (targetHour <= 12) {
+      const session = getSessionIndicator(text, match.index, match[0].length);
+      if (session === 'pm') {
+        if (targetHour < 12) targetHour += 12;
+        else if (targetHour === 12) targetHour = 0;
+      } else if (session === 'am_sáng' && targetHour === 12) {
+        targetHour = 0;
+      }
+    }
+
+    if (targetHour >= 0 && targetMinute >= 0 && targetMinute < 60) {
+      timesSet.add(`${targetHour.toString().padStart(2, '0')}:${targetMinute.toString().padStart(2, '0')}`);
+    }
+  }
+
+  // 4. Trích xuất giờ chẵn: Xh, X giờ (VD: 16h, 1h sáng, 15h, 12h đêm)
+  // Loại trừ "hơn" (như 7h hơn) và "tiếng" (như đi 3 tiếng, 1 tiếng rưỡi) và "kém" (đã xử lý ở trên)
+  const hourRegex = /(\d{1,2})\s*(?:giờ|h)(?!\s*hơn)(?!\s*tiếng)(?!\s*kém)/gi;
+  while ((match = hourRegex.exec(text)) !== null) {
+    let hour = parseInt(match[1], 10);
+    const minute = '00';
+
+    const index = match.index;
+    const matchLength = match[0].length;
+    const subAfter = textLower.substring(index + matchLength, index + matchLength + 15);
+
+    // Nếu đây là một phần của giờ rưỡi hoặc giờ có phút (HH:MM), bỏ qua
+    if (subAfter.match(/^\s*(?:giờ|h)?\s*rưỡi/) || subAfter.match(/^\s*\d{2}/) || subAfter.match(/^[h:]\s*\d{2}/)) {
+      continue;
+    }
+
+    if (hour <= 12) {
+      const session = getSessionIndicator(text, index, matchLength);
+      if (session === 'pm') {
+        if (hour < 12) hour += 12;
+        else if (hour === 12) hour = 0;
+      } else if (session === 'am_sáng' && hour === 12) {
+        hour = 0;
+      }
+    }
+
+    timesSet.add(`${hour.toString().padStart(2, '0')}:${minute}`);
+  }
+
+  return Array.from(timesSet).sort();
+}
 
 // Helper to save booking to PostgreSQL
 async function saveBooking(booking: BookingInfo) {
@@ -234,7 +357,7 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
     missingFields.push(...tripMissingFields);
     missingFields.push(...personalMissingFields);
     if (personalMissingFields.length > 0) {
-        validationMessages.push('Thiếu thông tin khách hàng. Bắt buộc: AI yêu cầu khách cung cấp thông tin (Tên, SĐT) để hoàn tất đặt vé.');
+      validationMessages.push('Thiếu thông tin khách hàng. Bắt buộc: AI yêu cầu khách cung cấp thông tin (Tên, SĐT) để hoàn tất đặt vé.');
     }
   }
 
@@ -245,7 +368,7 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
   if (pickup && dropoff) {
     const allDeparturesInfo = await getDepartureTimes(operatorId, pickup, dropoff, 'all', departure_date);
     const deps = allDeparturesInfo.departures;
-    
+
     let availableTimes: string[] = [];
     if (deps.length > 0) {
       // 1. Filter by vehicle_type
@@ -258,40 +381,20 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
           if (vehicle_type === 'ghe') return lbl.includes('ghế');
           return true;
         });
-        
+
         if (validDeps.length === 0) {
-           status = 'incomplete';
-           if (!missingFields.includes('vehicle_type')) missingFields.push('vehicle_type');
-           validationMessages.push(`Tuyến ${pickup} đi ${dropoff} không có loại xe ${getVehicleLabel(vehicle_type)}. Tuyến này chỉ có: ${[...new Set(deps.map(d => d.vehicle_label))].join(', ')}. Bắt buộc: AI thông báo cho khách lỗi này và yêu cầu đổi loại xe.`);
+          status = 'incomplete';
+          if (!missingFields.includes('vehicle_type')) missingFields.push('vehicle_type');
+          validationMessages.push(`Tuyến ${pickup} đi ${dropoff} không có loại xe ${getVehicleLabel(vehicle_type)}. Tuyến này chỉ có: ${[...new Set(deps.map(d => d.vehicle_label))].join(', ')}. Bắt buộc: AI thông báo cho khách lỗi này và yêu cầu đổi loại xe.`);
         }
       }
-      
+
       if (validDeps.length > 0) {
         availableTimes = validDeps.map(d => d.time);
       }
     } else if (allDeparturesInfo.qa_response) {
-      // Trích xuất các giờ xe chạy từ câu trả lời văn bản Q&A nếu không có danh sách departures chuẩn hóa
-      const text = allDeparturesInfo.qa_response;
-      const regex = /(\d{1,2})[h:](\d{2})/gi;
-      let match;
-      const timesSet = new Set<string>();
-      while ((match = regex.exec(text)) !== null) {
-        const hours = match[1].padStart(2, '0');
-        const minutes = match[2];
-        timesSet.add(`${hours}:${minutes}`);
-      }
-      
-      const textLower = text.toLowerCase();
-      const hourRegex = /(\d{1,2})\s*(?:giờ|h)/g;
-      while ((match = hourRegex.exec(textLower)) !== null) {
-        const hour = match[1].padStart(2, '0');
-        const index = match.index;
-        const sub = textLower.substring(index, index + 10);
-        if (!/\d{1,2}[h:]\d{2}/.test(sub)) {
-          timesSet.add(`${hour}:00`);
-        }
-      }
-      availableTimes = Array.from(timesSet);
+      // Trích xuất các giờ xe chạy từ câu trả lời văn bản Q&A bằng hàm phân tích thông minh
+      availableTimes = extractTimesFromText(allDeparturesInfo.qa_response);
     }
 
     // Kiểm tra tính hợp lệ của giờ đi
@@ -329,7 +432,7 @@ export async function collectBookingInfo(args: any, operatorId: string = 'vu_han
 • Ngày: ${departure_date} - Chuyến: ${departure_time}
 • Tên: ${customer_name}
 • SĐT: ${phone_number}
-SMS xác nhận đã được gửi đến SĐT ${phone_number}.
+Tin nhắn SMS xác nhận hành trình đã được gửi đến điện thoại của anh/chị.
 
 Anh/chị chuyển khoản để giữ chỗ nhé ạ.
 Tìm Zalo OA "Xe khách Vũ Hán" (tích vàng) để xem thông tin thanh toán ạ.
@@ -340,13 +443,8 @@ Lái phụ xe sẽ liên hệ trước 1-2 tiếng hẹn điểm đón ạ. 🙏
     // Save to PostgreSQL Database
     await saveBooking(result);
 
-    // Gửi SMS xác nhận qua SĐT
-    if (result.phone_number) {
-      const smsSent = await SmsService.sendBookingConfirmation(result);
-      if (smsSent) {
-        console.log(`[collectBookingInfo] SMS xác nhận đã gửi đến: ${result.phone_number}`);
-      }
-    }
+    // Gửi tin nhắn SMS xác nhận hành trình đến khách hàng
+    await SmsService.sendBookingSms(result);
   }
 
   return result;

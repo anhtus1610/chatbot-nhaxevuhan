@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
-import { 
-  Send, 
-  Sparkles, 
-  MapPin, 
-  Clock, 
+import {
+  Send,
+  Sparkles,
+  MapPin,
+  Clock,
   Bus,
   User,
   Bot,
@@ -23,9 +23,9 @@ import { useLocation } from 'react-router-dom'
 export default function GeminiChat() {
   const { sessions, currentSessionId: sessionId, createNewChat, addMessage } = useChatStore()
   const messages = sessions.find((s: ChatSession) => s.id === sessionId)?.messages || []
-  
+
   const userState = useUserStore()
-  
+
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [streamingContent, setStreamingContent] = useState('')
@@ -172,13 +172,13 @@ export default function GeminiChat() {
         }
 
         if (bd.status === 'complete') {
-          const alreadyExists = userState.bookingHistory.some((b: BookingHistoryItem) => 
-            b.from === bd.pickup && 
-            b.to === bd.dropoff && 
-            b.date === bd.departure_date && 
+          const alreadyExists = userState.bookingHistory.some((b: BookingHistoryItem) =>
+            b.from === bd.pickup &&
+            b.to === bd.dropoff &&
+            b.date === bd.departure_date &&
             b.time === bd.departure_time
           )
-          
+
           if (!alreadyExists) {
             userState.addBooking({
               from: bd.pickup,
@@ -216,7 +216,7 @@ export default function GeminiChat() {
   }
 
   const handleSaveSimProfile = () => {
-    userState.setUserProfile({ 
+    userState.setUserProfile({
       name: simName,
       phone: simPhone
     })
@@ -232,7 +232,7 @@ export default function GeminiChat() {
   return (
     <div className="main-content" style={{ display: 'flex', flexDirection: 'row', width: '100%', height: '100%' }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
-        
+
         {/* Header toolbar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -243,7 +243,7 @@ export default function GeminiChat() {
               </span>
             )}
           </div>
-          <button 
+          <button
             onClick={() => setShowSimPanel(!showSimPanel)}
             style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', cursor: 'pointer', transition: 'all 0.2s' }}
           >
@@ -255,7 +255,7 @@ export default function GeminiChat() {
         <div className="chat-container" style={{ flex: 1, overflowY: 'auto' }}>
           <AnimatePresence mode="wait">
             {messages.length === 0 ? (
-              <motion.div 
+              <motion.div
                 key="greeting"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -264,13 +264,13 @@ export default function GeminiChat() {
               >
                 <h1 className="greeting-text">Chào bạn, tôi là Vũ Hán Assistant</h1>
                 <p className="text-[#c4c7c5] text-lg mb-8">Hôm nay tôi có thể giúp gì cho chuyến đi của bạn?</p>
-                
+
                 <div className="suggestion-grid">
                   {suggestions.map((s, i) => (
-                    <SuggestionCard 
-                      key={i} 
-                      text={s.text} 
-                      icon={s.icon} 
+                    <SuggestionCard
+                      key={i}
+                      text={s.text}
+                      icon={s.icon}
                       onClick={() => handleSend(s.text)}
                     />
                   ))}
@@ -342,20 +342,20 @@ export default function GeminiChat() {
                         <Bot size={16} />
                       </div>
                       <div className="loading-dots">
-                        <motion.div 
-                          animate={{ scale: [1, 1.2, 1] }} 
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1] }}
                           transition={{ repeat: Infinity, duration: 1 }}
-                          className="loading-dot" 
+                          className="loading-dot"
                         />
-                        <motion.div 
-                          animate={{ scale: [1, 1.2, 1] }} 
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1] }}
                           transition={{ repeat: Infinity, duration: 1, delay: 0.2 }}
-                          className="loading-dot" 
+                          className="loading-dot"
                         />
-                        <motion.div 
-                          animate={{ scale: [1, 1.2, 1] }} 
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1] }}
                           transition={{ repeat: Infinity, duration: 1, delay: 0.4 }}
-                          className="loading-dot" 
+                          className="loading-dot"
                         />
                       </div>
                     </div>
@@ -384,12 +384,11 @@ export default function GeminiChat() {
               className="chat-input"
             />
             <div className="input-actions">
-              <button 
+              <button
                 onClick={() => handleSend()}
                 disabled={!input.trim() || loading}
-                className={`icon-btn ${
-                  input.trim() && !loading ? 'active' : ''
-                }`}
+                className={`icon-btn ${input.trim() && !loading ? 'active' : ''
+                  }`}
               >
                 <Send size={20} />
               </button>
@@ -410,16 +409,16 @@ export default function GeminiChat() {
               <X size={20} />
             </button>
           </div>
-          
+
           <div style={{ padding: '16px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            
+
             {/* Profile Inputs */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', color: '#aaa', marginBottom: '4px' }}>Tên khách hàng</label>
-                <input 
-                  type="text" 
-                  value={simName} 
+                <input
+                  type="text"
+                  value={simName}
                   onChange={(e) => setSimName(e.target.value)}
                   style={{ width: '100%', background: '#2c2c2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', padding: '8px', color: '#fff', fontSize: '0.9rem' }}
                 />
@@ -427,16 +426,16 @@ export default function GeminiChat() {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', color: '#aaa', marginBottom: '4px' }}>Số điện thoại</label>
-                <input 
-                  type="text" 
-                  value={simPhone} 
+                <input
+                  type="text"
+                  value={simPhone}
                   onChange={(e) => setSimPhone(e.target.value)}
                   style={{ width: '100%', background: '#2c2c2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', padding: '8px', color: '#fff', fontSize: '0.9rem' }}
                 />
               </div>
 
 
-              <button 
+              <button
                 onClick={handleSaveSimProfile}
                 style={{ background: '#0a84ff', border: 'none', color: '#fff', borderRadius: '6px', padding: '8px', cursor: 'pointer', fontSize: '0.9rem', width: '100%', fontWeight: 500 }}
               >
@@ -451,7 +450,7 @@ export default function GeminiChat() {
                 {userState.bookingHistory.map((booking: BookingHistoryItem, idx: number) => (
                   <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#2c2c2e', padding: '8px 12px', borderRadius: '6px', fontSize: '0.85rem' }}>
                     <span>{booking.from} ➔ {booking.to}</span>
-                    <button 
+                    <button
                       onClick={() => {
                         const nextHistory = [...userState.bookingHistory]
                         nextHistory.splice(idx, 1)
@@ -469,22 +468,22 @@ export default function GeminiChat() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.03)', padding: '10px', borderRadius: '6px', border: '1px dashed rgba(255,255,255,0.1)' }}>
                 <span style={{ fontSize: '0.8rem', color: '#aaa' }}>Thêm chuyến xe đã đặt</span>
                 <div style={{ display: 'flex', gap: '6px' }}>
-                  <input 
-                    type="text" 
-                    placeholder="Đi (VD: TQ)" 
+                  <input
+                    type="text"
+                    placeholder="Đi (VD: TQ)"
                     value={newFrom}
                     onChange={(e) => setNewFrom(e.target.value)}
                     style={{ flex: 1, background: '#2c2c2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', padding: '6px', color: '#fff', fontSize: '0.8rem' }}
                   />
-                  <input 
-                    type="text" 
-                    placeholder="Đến (VD: HG)" 
+                  <input
+                    type="text"
+                    placeholder="Đến (VD: HG)"
                     value={newTo}
                     onChange={(e) => setNewTo(e.target.value)}
                     style={{ flex: 1, background: '#2c2c2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', padding: '6px', color: '#fff', fontSize: '0.8rem' }}
                   />
                 </div>
-                <button 
+                <button
                   onClick={handleAddSimBooking}
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', background: '#30d158', border: 'none', color: '#fff', borderRadius: '4px', padding: '6px', cursor: 'pointer', fontSize: '0.85rem', width: '100%' }}
                 >

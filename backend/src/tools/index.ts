@@ -157,7 +157,7 @@ export const tools: ChatCompletionTool[] = [
     type: 'function',
     function: {
       name: 'collect_booking_info',
-      description: 'Thu thập và xác nhận thông tin đặt vé của khách. Sử dụng khi khách muốn đặt vé, giữ chỗ. Bắt buộc phải thu thập đủ: tên, SĐT, điểm đón, điểm trả, ngày đi, giờ đi, loại xe, số vé. SMS xác nhận sẽ được gửi tự động qua SĐT.',
+      description: 'Thu thập và xác nhận thông tin đặt vé của khách. Sử dụng khi khách muốn đặt vé, giữ chỗ. Bắt buộc phải thu thập đủ: tên, SĐT, điểm đón, điểm trả, ngày đi, giờ đi, loại xe, số vé. Tin nhắn Zalo xác nhận sẽ được gửi tự động.',
       parameters: {
         type: 'object',
         properties: {
