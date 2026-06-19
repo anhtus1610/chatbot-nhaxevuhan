@@ -398,6 +398,18 @@ Tuyệt đối không tự ý hỏi các thông tin đặt vé khác cho đến 
     this.initializeConversation();
   }
 
+  setHistory(history: Array<{ role: 'user' | 'assistant'; content: string }>): void {
+    this.initializeConversation();
+    for (const msg of history) {
+      if (msg.role === 'user' || msg.role === 'assistant') {
+        this.conversationHistory.push({
+          role: msg.role,
+          content: msg.content
+        });
+      }
+    }
+  }
+
   getConversationHistory(): ChatCompletionMessageParam[] {
     return this.conversationHistory;
   }

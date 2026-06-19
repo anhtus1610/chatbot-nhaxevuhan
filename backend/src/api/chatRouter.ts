@@ -13,7 +13,7 @@ const sessions: Map<string, VuHanChatAgent> = new Map();
 // POST /api/chat
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { message, session_id, operator_id = 'vu_han', user_profile } = req.body;
+    const { message, session_id, operator_id = 'vu_han', user_profile, history } = req.body;
 
     if (!message) {
       return res.status(400).json({
@@ -35,6 +35,10 @@ router.post('/', async (req: Request, res: Response) => {
       if (sessionId) {
         sessions.set(sessionId, agent);
       }
+    }
+
+    if (history && Array.isArray(history)) {
+      agent.setHistory(history);
     }
 
     // Xử lý tin nhắn
@@ -67,7 +71,7 @@ router.post('/', async (req: Request, res: Response) => {
 // POST /api/chat/stream
 router.post('/stream', async (req: Request, res: Response) => {
   try {
-    const { message, session_id, operator_id = 'vu_han', user_profile } = req.body;
+    const { message, session_id, operator_id = 'vu_han', user_profile, history } = req.body;
 
     if (!message) {
       return res.status(400).json({
@@ -88,6 +92,10 @@ router.post('/stream', async (req: Request, res: Response) => {
       if (sessionId) {
         sessions.set(sessionId, agent);
       }
+    }
+
+    if (history && Array.isArray(history)) {
+      agent.setHistory(history);
     }
 
     // Set headers for SSE

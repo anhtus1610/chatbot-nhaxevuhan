@@ -102,6 +102,7 @@ export default function GeminiChat() {
       const reader = await sendMessageStream({
         sessionId: sessionId!,
         message: text.trim(),
+        history: messages.map(m => ({ role: m.role, content: m.content })),
         user_profile: {
           name: userState.name,
           phone: userState.phone,

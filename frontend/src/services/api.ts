@@ -31,6 +31,7 @@ export interface ChatMessage {
 export interface ChatRequest {
   sessionId: string
   message: string
+  history?: ChatMessage[]
   user_profile?: {
     name?: string
     phone?: string
