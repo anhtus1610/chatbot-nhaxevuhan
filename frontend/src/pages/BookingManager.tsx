@@ -128,7 +128,6 @@ export default function BookingManager() {
                   <th>Thời gian đặt</th>
                   <th>Khách hàng</th>
                   <th>SĐT</th>
-                  <th>Email</th>
                   <th>Lộ trình</th>
                   <th>Khởi hành</th>
                   <th>Loại xe & Số vé</th>
@@ -145,7 +144,6 @@ export default function BookingManager() {
                     </td>
                     <td className="bm-col-name font-medium">{b.customer_name || '—'}</td>
                     <td className="bm-col-phone">{b.phone_number || '—'}</td>
-                    <td className="bm-col-email" style={{ fontSize: '13px', color: '#9ca3af' }}>{b.email || '—'}</td>
                     <td className="bm-col-route">
                       <div className="bm-route">
                         <span className="bm-pickup">{b.pickup}</span>
