@@ -7,7 +7,7 @@ export default defineConfig({
   workers: process.env.CI ? 4 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'https://chatbot-nhaxevuhan.vercel.app/chat',
+    baseURL: 'https://chatbot-nhaxevuhan-sevl.vercel.app/chat',
     headless: true,
     viewport: { width: 1280, height: 720 },
     screenshot: 'on',

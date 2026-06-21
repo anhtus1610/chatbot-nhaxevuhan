@@ -35,8 +35,7 @@ export class ChatbotPage {
     async getLastBotResponse(): Promise<string> {
         const lastMessage = this.assistantMessages.last();
         await lastMessage.waitFor({ state: 'visible', timeout: 20000 });
-        await this.page.waitForTimeout(5000); 
-        
+        await this.page.waitForTimeout(5000);
         const rawText = await lastMessage.innerText();
         return rawText.replace(/\s+/g, ' ').trim().toLowerCase();
     }

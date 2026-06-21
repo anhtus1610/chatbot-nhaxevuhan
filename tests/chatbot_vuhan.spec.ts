@@ -41,7 +41,6 @@ for (const record of records) {
             .map(k => k.replace(/\s+/g, ' ').trim().toLowerCase())
             .filter(k => k.length > 0);
 
-        // 4. Kiểm tra mức độ khớp từ khóa
         const matchedKeywords = expectedKeywords.filter(keyword => 
             actualText.includes(keyword)
         );
