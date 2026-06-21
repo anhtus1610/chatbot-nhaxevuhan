@@ -71,4 +71,30 @@ router.get('/db', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/health/validate-test — Debug endpoint để test validatePickupLocation logic
+router.get('/validate-test', (req: Request, res: Response) => {
+  const pickupVal = String(req.query.pickup || 'Hà Nội');
+  const userMsg = String(req.query.msg || 'giá vé hà nội đồng văn');
+  
+  const normalize = (s: string) => s.normalize('NFC').toLowerCase().trim();
+  const locLower = normalize(pickupVal);
+  const normalizedMsg = normalize(userMsg);
+  
+  const hanoiKeywords = ['hà nội', 'ha noi', 'hanoi', 'mỹ đình', 'my dinh'];
+  const normalizedKws = hanoiKeywords.map(k => normalize(k));
+  
+  const directMatch = normalizedMsg.includes(locLower);
+  const kwMatch = normalizedKws.some(kw => normalizedMsg.includes(kw));
+  
+  res.json({
+    input: { pickupVal, userMsg },
+    normalized: { locLower, normalizedMsg: normalizedMsg.substring(0, 60) },
+    hexPickup: Buffer.from(locLower).toString('hex'),
+    hexMsgSlice: Buffer.from(normalizedMsg.substring(0, 10)).toString('hex'),
+    directMatch,
+    kwMatch,
+    normalizedKws
+  });
+});
+
 export { router as healthRouter };

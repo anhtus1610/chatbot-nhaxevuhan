@@ -19,29 +19,7 @@ export interface ETAResult {
   note: string;
 }
 
-// Fallback ETA offsets từ Mỹ Đình (phút) — chỉ dùng khi không tìm được từ schedules.md
-const fallbackOffsets: { [key: string]: number } = {
-  'cau_thang_long': 15,
-  'ciputra': 15,
-  'cong_vien_hoa_binh': 15,
-  'bau': 20,
-  'nam_hong': 25,
-  'nga_3_kim_anh': 30,
-  'nga_4_noi_bai': 30,
-  'me_linh': 30,
-  'quang_minh': 30,
-  'km14': 45,
-  'km14_binh_xuyen': 45,
-  'km25': 60,
-  'km25_tam_dao': 60,
-  'km41': 70,
-  'phu_tho': 120,
-  'tuyen_quang': 130,
-  'ha_giang': 420,
-  'xin_man': 480,
-  'dong_van': 600,
-  'meo_vac': 540
-};
+// Import travelTimeCalculator later when needed
 
 /**
  * Tìm ETA thực tế từ schedules.md — parse từ bảng ETA chi tiết
@@ -152,8 +130,10 @@ export async function getETA(
     confidence = 'from_schedule';
     console.log(`[getETA] Found ETA from schedules.md: ${checkpoint} = ${etaStr} (offset: ${offsetMinutes} min)`);
   } else {
-    // 2. Fallback: dùng offset cố định
-    offsetMinutes = fallbackOffsets[normalizedCheckpoint.normalized] || 0;
+    // 2. Fallback: dùng calculator để tính theo giờ khởi hành (mặc định loại xe bus nếu không rõ)
+    const { getBaseMinutesForDestination, adjustTravelTime } = require('../utils/travelTimeCalculator');
+    const baseMinutes = getBaseMinutesForDestination(normalizedCheckpoint.normalized);
+    offsetMinutes = adjustTravelTime(baseMinutes, 'bus', departureTime);
     
     // Tính ETA từ offset
     const [hours, minutes] = departureTime.split(':').map(Number);

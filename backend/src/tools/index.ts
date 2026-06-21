@@ -13,9 +13,27 @@ import { collectBookingInfo } from './collectBookingInfo';
 import { handoffToCSKH } from './handoffToCSKH';
 import { checkShippingInfo } from './checkShippingInfo';
 import { answerFAQ, checkSpecialSituation } from './answerFAQ';
+import { checkBookingHistory } from './checkBookingHistory';
 
 // Định nghĩa các tools cho OpenAI Function Calling
 export const tools: ChatCompletionTool[] = [
+  {
+    type: 'function',
+    function: {
+      name: 'check_booking_history',
+      description: 'Kiểm tra lịch sử đặt vé của khách hàng qua số điện thoại để gợi ý các chuyến đi cũ. Sử dụng khi khách cung cấp số điện thoại và muốn xem lịch sử hoặc muốn đặt lại vé như lần trước.',
+      parameters: {
+        type: 'object',
+        properties: {
+          phone_number: {
+            type: 'string',
+            description: 'Số điện thoại của khách hàng cần tra cứu (VD: 0375173917)'
+          }
+        },
+        required: ['phone_number']
+      }
+    }
+  },
   {
     type: 'function',
     function: {
@@ -26,11 +44,11 @@ export const tools: ChatCompletionTool[] = [
         properties: {
           pickup: {
             type: 'string',
-            description: 'Điểm đón khách muốn lên xe (VD: Hà Nội, Mỹ Đình, Bắc Giang)'
+            description: 'Điểm đón khách muốn lên xe (VD: Hà Nội, Mỹ Đình, Bắc Giang). BẮT BUỘC lấy từ lịch sử trò chuyện lượt trước nếu người dùng không nhắc lại. TUYỆT ĐỐI KHÔNG tự ý điền Hà Nội hoặc giá trị mặc định nào khác nếu khách hàng chưa cung cấp điểm xuất phát/đón.'
           },
           dropoff: {
             type: 'string',
-            description: 'Điểm trả khách muốn xuống (VD: Xín Mần, Đồng Văn, Mèo Vạc)'
+            description: 'Điểm trả khách muốn xuống (VD: Xín Mần, Đồng Văn, Mèo Vạc). BẮT BUỘC lấy từ lịch sử trò chuyện lượt trước nếu người dùng không nhắc lại và chỉ thay đổi điểm đón.'
           },
           vehicle: {
             type: 'string',
@@ -52,11 +70,11 @@ export const tools: ChatCompletionTool[] = [
         properties: {
           from: {
             type: 'string',
-            description: 'Điểm xuất phát (VD: Hà Nội, Mỹ Đình)'
+            description: 'Điểm xuất phát (VD: Hà Nội, Mỹ Đình). BẮT BUỘC lấy từ lịch sử trò chuyện lượt trước nếu người dùng không nhắc lại. TUYỆT ĐỐI KHÔNG tự ý điền Hà Nội hoặc giá trị mặc định nào khác nếu khách hàng chưa cung cấp điểm xuất phát/đi.'
           },
           to: {
             type: 'string',
-            description: 'Điểm đến (VD: Xín Mần, Tuyên Quang)'
+            description: 'Điểm đến (VD: Xín Mần, Tuyên Quang). BẮT BUỘC lấy từ lịch sử trò chuyện lượt trước nếu người dùng không nhắc lại và chỉ thay đổi điểm xuất phát (ví dụ: lượt trước đi Xín Mần, lượt này nói "tôi đi từ Tuyên Quang" thì điểm đến vẫn phải giữ nguyên là Xín Mần, TUYỆT ĐỐI không mặc định/tự đổi thành Hà Nội).'
           },
           vehicle: {
             type: 'string',
@@ -139,7 +157,7 @@ export const tools: ChatCompletionTool[] = [
     type: 'function',
     function: {
       name: 'collect_booking_info',
-      description: 'Thu thập và xác nhận thông tin đặt vé của khách. Sử dụng khi khách muốn đặt vé, giữ chỗ. Bắt buộc phải thu thập đủ: tên, SĐT, email, điểm đón, điểm trả, ngày đi, giờ đi, loại xe, số vé.',
+      description: 'Thu thập và xác nhận thông tin đặt vé của khách. Sử dụng khi khách muốn đặt vé, giữ chỗ. Bắt buộc phải thu thập đủ: tên, SĐT, điểm đón, điểm trả, ngày đi, giờ đi, loại xe, số vé. Tin nhắn Zalo xác nhận sẽ được gửi tự động.',
       parameters: {
         type: 'object',
         properties: {
@@ -153,15 +171,15 @@ export const tools: ChatCompletionTool[] = [
           },
           email: {
             type: 'string',
-            description: 'Địa chỉ email của khách hàng để nhận xác nhận đặt vé (bắt buộc)'
+            description: 'Địa chỉ email của khách hàng (không bắt buộc, chỉ thu thập nếu khách tự cung cấp)'
           },
           pickup: {
             type: 'string',
-            description: 'Điểm đón'
+            description: 'Điểm đón. BẮT BUỘC lấy từ lịch sử trò chuyện lượt trước nếu người dùng không nhắc lại và chỉ thay đổi điểm trả.'
           },
           dropoff: {
             type: 'string',
-            description: 'Điểm trả'
+            description: 'Điểm trả. BẮT BUỘC lấy từ lịch sử trò chuyện lượt trước nếu người dùng không nhắc lại và chỉ thay đổi điểm đón.'
           },
           departure_date: {
             type: 'string',
@@ -241,6 +259,8 @@ export async function executeTool(
   operatorId: string
 ): Promise<any> {
   switch (toolName) {
+    case 'check_booking_history':
+      return await checkBookingHistory(args.phone_number);
     case 'check_route_and_price':
       return await checkRouteAndPrice(operatorId, args.pickup, args.dropoff, args.vehicle);
     case 'get_departure_times':
@@ -266,3 +286,4 @@ export async function executeTool(
       return { error: 'Unknown tool: ' + toolName };
   }
 }
+

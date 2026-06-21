@@ -55,26 +55,45 @@ export class VuHanChatAgent {
   private conversationHistory: ChatCompletionMessageParam[] = [];
   private operatorId: string;
   private model: string;
+  private userProfile: any;
 
-  constructor(operatorId: string = 'vu_han') {
+  constructor(operatorId: string = 'vu_han', userProfile?: any) {
     this.operatorId = operatorId;
     this.model = process.env.OPENAI_MODEL || 'gpt-4o';
+    this.userProfile = userProfile;
     this.initializeConversation();
   }
 
   private initializeConversation(): void {
     const now = new Date();
-    const dateStr = now.toLocaleDateString('vi-VN', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    const dateStr = now.toLocaleDateString('vi-VN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
+
+    let promptAddition = '';
+    if (this.userProfile?.bookingHistory && this.userProfile.bookingHistory.length > 0) {
+      const history = this.userProfile.bookingHistory;
+      const lastBooking = history[history.length - 1];
+      const customerName = this.userProfile.name || 'khách';
+      const from = lastBooking.pickup || lastBooking.from;
+      const to = lastBooking.dropoff || lastBooking.to;
+      if (from && to) {
+        promptAddition = `\n\n**QUY TẮC ĐẶC BIỆT (ƯU TIÊN HÀNG ĐẦU)**:
+Khách hàng này tên là "${customerName}" (SĐT: ${this.userProfile.phone || 'chưa có'}).
+Khách hàng có lịch sử vừa đặt chuyến đi từ "${from}" đến "${to}".
+Ngay trong câu trả lời đầu tiên của cuộc trò chuyện (bất kể khách hàng nói gì như "alo", "tôi muốn đặt vé", v.v.), bạn BẮT BUỘC phải chủ động chào hỏi theo tên khách và gợi ý ngay chuyến xe khứ hồi ngược lại từ "${to}" về "${from}" cho khách hàng này.
+Ví dụ: "Dạ em vừa thấy anh/chị ${customerName} đặt chuyến đi ${from} -> ${to}, mình có muốn đặt vé từ ${to}->${from} không ạ?"
+Tuyệt đối không tự ý hỏi các thông tin đặt vé khác cho đến khi khách phản hồi về gợi ý khứ hồi này.`;
+      }
+    }
     
     this.conversationHistory = [
       {
         role: 'system',
-        content: `${systemPrompt}\n\n**THỜI GIAN HIỆN TẠI**: Hôm nay là ${dateStr}.`
+        content: `${systemPrompt}\n\n**THỜI GIAN HIỆN TẠI**: Hôm nay là ${dateStr}.${promptAddition}`
       }
     ];
   }
@@ -112,7 +131,14 @@ export class VuHanChatAgent {
 
           console.log(`🔧 Calling tool: ${functionName}`, functionArgs);
 
-          const result = await executeTool(functionName, functionArgs, this.operatorId);
+          let result;
+          const validation = this.validatePickupLocation(functionName, functionArgs);
+          if (!validation.valid) {
+            result = validation.errorResult;
+            console.log(`⚠️ Blocked defaulted pickup location for tool ${functionName}:`, result);
+          } else {
+            result = await executeTool(functionName, functionArgs, this.operatorId);
+          }
 
           toolCalls.push({
             toolName: functionName,
@@ -263,8 +289,15 @@ export class VuHanChatAgent {
             }
 
             console.log(`🔧 Calling tool in stream: ${functionName}`, functionArgs);
-            
-            const result = await executeTool(functionName, functionArgs, this.operatorId);
+
+            let result;
+            const validation = this.validatePickupLocation(functionName, functionArgs);
+            if (!validation.valid) {
+              result = validation.errorResult;
+              console.log(`⚠️ Blocked defaulted pickup location in stream for tool ${functionName}:`, result);
+            } else {
+              result = await executeTool(functionName, functionArgs, this.operatorId);
+            }
 
             toolCallsResults.push({ toolName: functionName, result });
 
@@ -285,9 +318,9 @@ export class VuHanChatAgent {
           });
 
           const chatResponse = this.analyzeResponse(content, toolCallsResults);
-          
-          yield { 
-            type: 'done', 
+
+          yield {
+            type: 'done',
             content: content,
             data: {
               intent: chatResponse.intent,
@@ -295,7 +328,7 @@ export class VuHanChatAgent {
               needsEscalation: chatResponse.needsEscalation
             }
           };
-          
+
           continueLoop = false;
 
         } else {
@@ -365,9 +398,140 @@ export class VuHanChatAgent {
     this.initializeConversation();
   }
 
+  setHistory(history: Array<{ role: 'user' | 'assistant'; content: string }>): void {
+    this.initializeConversation();
+    for (const msg of history) {
+      if (msg.role === 'user' || msg.role === 'assistant') {
+        this.conversationHistory.push({
+          role: msg.role,
+          content: msg.content
+        });
+      }
+    }
+  }
+
   getConversationHistory(): ChatCompletionMessageParam[] {
     return this.conversationHistory;
+  }
+
+  private validatePickupLocation(functionName: string, functionArgs: any): { valid: boolean, errorResult?: any } {
+    if (!['check_route_and_price', 'get_departure_times', 'collect_booking_info'].includes(functionName)) {
+      return { valid: true };
+    }
+
+    const pickupArgs = ['pickup', 'from', 'pickup_location'];
+    let pickupVal = '';
+    for (const arg of pickupArgs) {
+      if (functionArgs[arg]) {
+        pickupVal = functionArgs[arg];
+        break;
+      }
+    }
+    
+    if (!pickupVal) return { valid: true };
+    
+    // Strip Vietnamese diacritics to ASCII for robust comparison regardless of encoding
+    const removeVietnamese = (s: string): string => {
+      return s
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // remove combining diacritical marks
+        .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+        .toLowerCase()
+        .trim();
+    };
+    const locAscii = removeVietnamese(pickupVal);
+    
+    // Check if mentioned in user messages (ASCII-stripped)
+    const userMessages = this.conversationHistory
+      .filter(m => m.role === 'user')
+      .map(m => {
+        const content = m.content;
+        if (typeof content === 'string') {
+          return removeVietnamese(content);
+        } else if (Array.isArray(content)) {
+          return content.map(part => ('text' in part ? removeVietnamese(part.text || '') : '')).join(' ');
+        }
+        return '';
+      });
+
+
+    // Extended keyword map covering all location variants & aliases
+    const keywordsMap: Record<string, string[]> = {
+      'hà nội': [
+        'hà nội', 'ha noi', 'hanoi', 'hn',
+        'mỹ đình', 'my dinh',
+        'nội bài', 'noi bai',
+        'giáp bát', 'giap bat',
+        'nước ngầm', 'nuoc ngam',
+        'kim anh', 'bầu', 'nam hồng',
+        'yên nghĩa', 'yen nghia',
+        'hà đông', 'ha dong',
+        'long biên', 'long bien',
+      ],
+      'tuyên quang': [
+        'tuyên quang', 'tuyen quang', 'tq',
+        'sơn dương', 'son duong', 'na hang',
+        'chiêm hóa', 'chiem hoa', 'hàm yên', 'ham yen',
+        'vĩnh lộc', 'vinh loc',
+      ],
+      'hà giang': [
+        'hà giang', 'ha giang', 'hg',
+        'xín mần', 'xin man', 'cốc pài', 'coc pai',
+        'đồng văn', 'dong van', 'đv', 'dv',
+        'mèo vạc', 'meo vac', 'mv',
+        'hoàng su phì', 'hoang su phi', 'hsp',
+        'yên minh', 'yen minh', 'quản bạ', 'quan ba',
+        'pà vầy sủ', 'pa vay su',
+        'tp hà giang', 'tp ha giang', 'thành phố hà giang',
+      ],
+      'lào cai': [
+        'lào cai', 'lao cai', 'lc',
+        'sapa', 'sa pa', 'bắc hà', 'bac ha',
+        'phố lu', 'pho lu', 'bảo hà', 'bao ha',
+      ],
+      'bắc giang': ['bac giang', 'bac giang', 'bg'],
+    };
+    
+    // Build candidate keyword set: start with ASCII-stripped pickup value itself
+    // All keywords are normalized via removeVietnamese so matching is encoding-independent
+    let matchKeywords: string[] = [locAscii];
+    for (const [, valArr] of Object.entries(keywordsMap)) {
+      const asciiVals = valArr.map(v => removeVietnamese(v));
+      // If any alias matches the pickup (ASCII-stripped), add ALL aliases for that group
+      if (asciiVals.some(v => locAscii.includes(v) || v.includes(locAscii) || locAscii === v)) {
+        matchKeywords.push(...asciiVals);
+      }
+    }
+    // Deduplicate
+    matchKeywords = [...new Set(matchKeywords)];
+    
+    // Check if ANY keyword is found in ANY user message (both stripped of Vietnamese)
+    const mentioned = userMessages.some(content =>
+      matchKeywords.some(keyword => keyword.length > 1 && content.includes(keyword))
+    );
+    if (mentioned) return { valid: true };
+    
+    // Check if in booking history of userProfile
+    if (this.userProfile?.bookingHistory) {
+      for (const b of this.userProfile.bookingHistory) {
+        const from = removeVietnamese(b.from || b.pickup || '');
+        const to = removeVietnamese(b.to || b.dropoff || '');
+        if (from && (from.includes(locAscii) || locAscii.includes(from))) return { valid: true };
+        if (to && (to.includes(locAscii) || locAscii.includes(to))) return { valid: true };
+      }
+    }
+    
+    // If not mentioned and not in history, it was defaulted by the AI
+    return {
+      valid: false,
+      errorResult: {
+        error: "missing_pickup_location",
+        message: `Khách hàng chưa cung cấp điểm xuất phát (điểm đi) cụ thể. Bạn không được tự ý mặc định điểm đi là ${pickupVal}. Hãy hỏi lại khách hàng xem họ muốn đi từ đâu.`
+      }
+    };
   }
 }
 
 export default VuHanChatAgent;
+
+

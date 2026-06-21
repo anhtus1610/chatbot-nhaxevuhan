@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { useChat } from '../context/ChatContext'
+import { useChatStore } from '../stores/chatStore'
 import {
   MessageSquare,
   MapPin,
@@ -19,7 +19,7 @@ function cn(...inputs: ClassValue[]) {
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const navigate = useNavigate()
-  const { sessions, currentSessionId, createNewChat, selectSession } = useChat()
+  const { sessions, currentSessionId, createNewChat, selectSession } = useChatStore()
 
   const publicNavItems = [
     { icon: MessageSquare, label: 'Chat', path: '/chat' },

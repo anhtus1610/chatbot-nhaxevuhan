@@ -18,6 +18,11 @@ import { cskhRouter } from './api/cskhRouter';
 
 dotenv.config();
 
+// Bỏ qua lỗi SSL certificate khi gọi API OpenAI trên local
+if (process.env.NODE_ENV !== 'production') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
 const app = express();
 const PORT = process.env.PORT || 14556;
 

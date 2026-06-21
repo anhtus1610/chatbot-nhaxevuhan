@@ -13,7 +13,7 @@ const sessions: Map<string, VuHanChatAgent> = new Map();
 // POST /api/chat
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { message, session_id, operator_id = 'vu_han' } = req.body;
+    const { message, session_id, operator_id = 'vu_han', user_profile, history } = req.body;
 
     if (!message) {
       return res.status(400).json({
@@ -26,13 +26,19 @@ router.post('/', async (req: Request, res: Response) => {
 
     // Lấy hoặc tạo session
     const sessionId = session_id || req.body.sessionId;
-    
+
+    console.log('[ChatRouter] Session:', sessionId, 'User Profile:', user_profile);
+
     let agent = sessions.get(sessionId);
     if (!agent) {
-      agent = new VuHanChatAgent(operator_id);
+      agent = new VuHanChatAgent(operator_id, user_profile);
       if (sessionId) {
         sessions.set(sessionId, agent);
       }
+    }
+
+    if (history && Array.isArray(history)) {
+      agent.setHistory(history);
     }
 
     // Xử lý tin nhắn
@@ -65,7 +71,7 @@ router.post('/', async (req: Request, res: Response) => {
 // POST /api/chat/stream
 router.post('/stream', async (req: Request, res: Response) => {
   try {
-    const { message, session_id, operator_id = 'vu_han' } = req.body;
+    const { message, session_id, operator_id = 'vu_han', user_profile, history } = req.body;
 
     if (!message) {
       return res.status(400).json({
@@ -77,13 +83,19 @@ router.post('/stream', async (req: Request, res: Response) => {
     }
 
     const sessionId = session_id || req.body.sessionId;
-    
+
+    console.log('[ChatRouter Stream] Session:', sessionId, 'User Profile:', user_profile);
+
     let agent = sessions.get(sessionId);
     if (!agent) {
-      agent = new VuHanChatAgent(operator_id);
+      agent = new VuHanChatAgent(operator_id, user_profile);
       if (sessionId) {
         sessions.set(sessionId, agent);
       }
+    }
+
+    if (history && Array.isArray(history)) {
+      agent.setHistory(history);
     }
 
     // Set headers for SSE
@@ -114,7 +126,7 @@ router.post('/stream', async (req: Request, res: Response) => {
 // DELETE /api/chat/:session_id - Reset session
 router.delete('/:session_id', (req: Request, res: Response) => {
   const { session_id } = req.params;
-  
+
   if (sessions.has(session_id)) {
     sessions.get(session_id)?.resetConversation();
     res.json({ success: true, message: 'Session reset' });

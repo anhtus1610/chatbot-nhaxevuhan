@@ -46,7 +46,8 @@ export default function ChatTester() {
     try {
       const response: ChatResponse = await sendMessage({
         sessionId,
-        message: input.trim()
+        message: input.trim(),
+        history: messages.map(m => ({ role: m.role, content: m.content }))
       })
 
       const assistantMessage: Message = {
